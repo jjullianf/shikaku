@@ -11,7 +11,7 @@
 </script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Shikaku — The Book</title>
+<title>Shikaku — Shop</title>
 <meta name="description" content="A handcrafted book of Shikaku puzzles. Coming soon.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Noto+Serif+JP:wght@300;400&display=swap">
@@ -98,7 +98,8 @@ main{padding-top:56px;min-height:100vh}.page{max-width:720px;margin:0 auto;paddi
   <ul class="nav-links">
     <li><a href="index.html">Daily</a></li>
     <li><a href="play.html">Play</a></li>
-    <li><a href="shop.html" class="active">Book</a></li>
+    <li><a href="shop.html" class="active">Shop</a></li>
+    <li><a href="about.html">About</a></li>
   </ul>
 </nav>
 <main><div class="page">
@@ -184,7 +185,7 @@ document.getElementById('notify-btn').addEventListener('click',()=>{
 document.getElementById('email-input').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('notify-btn').click();});
 
 // Sample puzzles (read-only with solution shown)
-const samples=[{rows:5,cols:5,seed:20240101,cs:38,label:'5 × 5'},{rows:10,cols:10,seed:20240202,cs:26,label:'10 × 10'},{rows:5,cols:5,seed:20240505,cs:38,label:'5 × 5'}];
+const samples=[{rows:5,cols:5,seed:20240101,cs:42,label:'5 × 5'},{rows:10,cols:10,seed:20240202,cs:28,label:'10 × 10'},{rows:20,cols:20,seed:20240303,cs:16,label:'20 × 20'}];
 const container=document.getElementById('sample-grid');
 samples.forEach(({rows,cols,seed,cs,label})=>{
   const puzzle=generatePuzzle(rows,cols,seed);
