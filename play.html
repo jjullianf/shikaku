@@ -44,8 +44,9 @@ main{padding-top:56px;min-height:100vh}
 .game-area{display:flex;flex-direction:column;align-items:center;gap:18px}
 .game-meta{display:flex;justify-content:space-between;align-items:center;width:100%;max-width:912px;font-size:.72rem;color:var(--ink3);letter-spacing:.08em}
 .timer{font-variant-numeric:tabular-nums;color:var(--ink2)}
-.canvas-wrap{position:relative;width:100%;max-width:912px;border-radius:var(--r);box-shadow:var(--shadow);background:var(--paper2);touch-action:none;cursor:crosshair;display:block}
-.canvas-wrap canvas{display:block;width:100%;height:100%}
+.canvas-wrap{position:relative;width:100%;max-width:912px;border-radius:var(--r);box-shadow:var(--shadow);background:var(--paper2);touch-action:pan-x pan-y;cursor:crosshair;display:block;overflow:auto}
+.canvas-wrap canvas{position:sticky;top:0;left:0;display:block;z-index:1}
+#puzzle-spacer{position:absolute;top:0;left:0;pointer-events:none;z-index:0}
 .zoom-controls{display:flex;gap:8px;align-items:center}
 .zoom-btn{font-family:'DM Mono',monospace;font-size:1.1rem;width:34px;height:34px;display:flex;align-items:center;justify-content:center;border:1px solid var(--border);background:var(--paper2);color:var(--ink2);cursor:pointer;border-radius:var(--r);transition:all var(--t);flex-shrink:0;line-height:1}
 .zoom-btn:hover{background:var(--paper3);color:var(--ink);border-color:var(--gold2)}
@@ -113,6 +114,7 @@ main{padding-top:56px;min-height:100vh}
     </div>
     <div class="canvas-wrap" id="canvas-wrap">
       <canvas id="game-canvas"></canvas>
+      <div id="puzzle-spacer"></div>
     </div>
     <div class="game-controls">
       <button class="btn" id="reset-btn">↺ Reset</button>
@@ -191,12 +193,31 @@ class ShikakuGame {
     const w = Math.min(this.wrap.clientWidth || 912, 912);
     const h = Math.min(w, window.innerHeight - 280);
     this.wrap.style.height = h + 'px';
+    // Canvas is exactly the visible area
     this.canvas.width = w * dpr;
     this.canvas.height = h * dpr;
-    this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0); // reset + scale in one call
+    this.canvas.style.width = w + 'px';
+    this.canvas.style.height = h + 'px';
+    this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     this._W = w;
     this._H = h;
+    this._updateSpacer();
   }
+
+  _updateSpacer() {
+    const {rows, cols} = this.puzzle;
+    const spacer = document.getElementById('puzzle-spacer');
+    if (spacer) {
+      spacer.style.width = (cols * BASE_CELL * this.zoom) + 'px';
+      spacer.style.height = (rows * BASE_CELL * this.zoom) + 'px';
+    }
+  }
+
+  // panX/panY are now driven by scroll position
+  get panX() { return -this.wrap.scrollLeft; }
+  get panY() { return -this.wrap.scrollTop; }
+  set panX(v) { this.wrap.scrollLeft = -v; }
+  set panY(v) { this.wrap.scrollTop = -v; }
 
   _fitToWrap() {
     const {rows, cols} = this.puzzle;
@@ -204,8 +225,10 @@ class ShikakuGame {
     const puzzleH = rows * BASE_CELL;
     const fitZoom = Math.min(this._W / puzzleW, this._H / puzzleH) * 0.96;
     this.zoom = fitZoom;
-    this.panX = (this._W - puzzleW * this.zoom) / 2;
-    this.panY = (this._H - puzzleH * this.zoom) / 2;
+    this._updateSpacer();
+    // Center the puzzle
+    this.wrap.scrollLeft = Math.max(0, (cols * BASE_CELL * this.zoom - this._W) / 2);
+    this.wrap.scrollTop  = Math.max(0, (rows * BASE_CELL * this.zoom - this._H) / 2);
     this._updateZoomLabel();
   }
 
@@ -215,11 +238,10 @@ class ShikakuGame {
   }
 
   // ── Coordinate conversion ──
-  // Screen (canvas element) → puzzle space
   _screenToWorld(sx, sy) {
     return {
-      x: (sx - this.panX) / this.zoom,
-      y: (sy - this.panY) / this.zoom
+      x: (this.wrap.scrollLeft + sx) / this.zoom,
+      y: (this.wrap.scrollTop  + sy) / this.zoom
     };
   }
 
@@ -251,13 +273,7 @@ class ShikakuGame {
 
   // ── Zoom/Pan ──
   _clampPan() {
-    const {rows, cols} = this.puzzle;
-    const pw = cols * BASE_CELL * this.zoom;
-    const ph = rows * BASE_CELL * this.zoom;
-    // Always keep at least half the puzzle visible on each axis
-    const minVisible = 0.5;
-    this.panX = Math.max(-(pw * (1 - minVisible)), Math.min(this._W * minVisible, this.panX));
-    this.panY = Math.max(-(ph * (1 - minVisible)), Math.min(this._H * minVisible, this.panY));
+    // Native scroll clamping handles this — nothing to do
   }
 
   fitToScreen() {
@@ -267,11 +283,13 @@ class ShikakuGame {
 
   zoomAt(factor, sx, sy) {
     const newZoom = Math.max(0.15, Math.min(8, this.zoom * factor));
-    const f = newZoom / this.zoom;
-    this.panX = sx - f * (sx - this.panX);
-    this.panY = sy - f * (sy - this.panY);
+    // Keep the point under cursor fixed
+    const worldX = (this.wrap.scrollLeft + sx) / this.zoom;
+    const worldY = (this.wrap.scrollTop  + sy) / this.zoom;
     this.zoom = newZoom;
-    this._clampPan();
+    this._updateSpacer();
+    this.wrap.scrollLeft = worldX * newZoom - sx;
+    this.wrap.scrollTop  = worldY * newZoom - sy;
     this._updateZoomLabel();
     this.render();
   }
@@ -328,9 +346,12 @@ class ShikakuGame {
     this.wrap.style.height = h + 'px';
     this.canvas.width = w * dpr;
     this.canvas.height = h * dpr;
+    this.canvas.style.width = w + 'px';
+    this.canvas.style.height = h + 'px';
     this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     this._W = w;
     this._H = h;
+    this._updateSpacer();
     this._fitToWrap();
     this.render();
   }
@@ -338,6 +359,9 @@ class ShikakuGame {
   // ── Events ──
   _bindEvents() {
     const c = this.canvas;
+
+    // Re-render whenever user scrolls (native scroll handles pan)
+    this.wrap.addEventListener('scroll', () => this.render(), {passive: true});
 
     // ── Mouse ──
     c.addEventListener('mousedown', e => {
@@ -494,13 +518,6 @@ class ShikakuGame {
           const midX = (cur[0].x+cur[1].x)/2 - rect.left;
           const midY = (cur[0].y+cur[1].y)/2 - rect.top;
           if (oldD > 1) this.zoomAt(newD/oldD, midX, midY);
-          // Pan from midpoint movement
-          const oldMidX = (lastTouches[0].x+lastTouches[1].x)/2 - rect.left;
-          const oldMidY = (lastTouches[0].y+lastTouches[1].y)/2 - rect.top;
-          this.panX += midX - oldMidX;
-          this.panY += midY - oldMidY;
-          this._clampPan();
-          this.render();
         }
         lastTouches = cur;
         return;
@@ -585,9 +602,11 @@ class ShikakuGame {
     ctx.fillStyle = C.bg;
     ctx.fillRect(0, 0, W, H);
 
-    // Apply zoom/pan transform
+    // Apply zoom/pan transform using scroll position
+    const scrollX = this.wrap.scrollLeft;
+    const scrollY = this.wrap.scrollTop;
     ctx.save();
-    ctx.translate(this.panX, this.panY);
+    ctx.translate(-scrollX, -scrollY);
     ctx.scale(this.zoom, this.zoom);
 
     const PW = cols * cs, PH = rows * cs;
