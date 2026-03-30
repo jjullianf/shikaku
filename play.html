@@ -29,7 +29,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;background:var(--paper);bord
 .nav-links a{font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;color:var(--ink2);text-decoration:none;transition:color var(--t)}
 .nav-links a:hover,.nav-links a.active{color:var(--gold)}
 main{padding-top:56px;min-height:100vh}
-.page{max-width:720px;margin:0 auto;padding:40px 24px 80px}
+.page{max-width:860px;margin:0 auto;padding:40px 24px 80px}
 .page-header{text-align:center;margin-bottom:32px}
 .page-header h1{font-family:'Noto Serif JP',serif;font-weight:300;font-size:1.6rem;letter-spacing:.08em;margin-bottom:8px}
 .page-header p{font-size:.78rem;color:var(--ink3);letter-spacing:.06em}
@@ -42,10 +42,10 @@ main{padding-top:56px;min-height:100vh}
 .size-btn:hover{background:var(--paper3);color:var(--ink);border-color:var(--gold2)}
 .size-btn.active{background:var(--ink);color:var(--paper);border-color:var(--ink)}
 .game-area{display:flex;flex-direction:column;align-items:center;gap:18px}
-.game-meta{display:flex;justify-content:space-between;align-items:center;width:100%;max-width:580px;font-size:.72rem;color:var(--ink3);letter-spacing:.08em}
+.game-meta{display:flex;justify-content:space-between;align-items:center;width:100%;max-width:800px;font-size:.72rem;color:var(--ink3);letter-spacing:.08em}
 .timer{font-variant-numeric:tabular-nums;color:var(--ink2)}
 /* Canvas fills its container — zoom/pan done via canvas 2D context transform */
-.canvas-wrap{position:relative;width:100%;max-width:580px;border-radius:var(--r);box-shadow:var(--shadow);background:var(--paper2);touch-action:none;cursor:crosshair;display:block}
+.canvas-wrap{position:relative;width:100%;max-width:800px;border-radius:var(--r);box-shadow:var(--shadow);background:var(--paper2);touch-action:none;cursor:crosshair;display:block}
 .canvas-wrap canvas{display:block;width:100%;height:100%}
 .zoom-controls{display:flex;gap:8px;align-items:center}
 .zoom-btn{font-family:'DM Mono',monospace;font-size:1.1rem;width:34px;height:34px;display:flex;align-items:center;justify-content:center;border:1px solid var(--border);background:var(--paper2);color:var(--ink2);cursor:pointer;border-radius:var(--r);transition:all var(--t);flex-shrink:0;line-height:1}
@@ -189,15 +189,19 @@ class ShikakuGame {
   // ── Setup ──
   _setupCanvas() {
     const dpr = window.devicePixelRatio || 1;
-    const w = this.wrap.clientWidth || 560;
-    const h = Math.min(Math.max(w * 0.75, 300), window.innerHeight - 280);
-    this.wrap.style.height = h + 'px';
-    // Canvas resolution matches physical pixels
-    this.canvas.width = w * dpr;
-    this.canvas.height = h * dpr;
+    const {rows, cols} = this.puzzle;
+    const maxW = Math.min(this.wrap.clientWidth || 800, 800);
+    // Make canvas height match the puzzle's aspect ratio, up to 85vh
+    const aspect = rows / cols;
+    const maxH = Math.min(window.innerHeight * 0.85, maxW * aspect);
+    const w = Math.min(maxW, maxH / aspect);
+    const h = w * aspect;
+    this.wrap.style.height = Math.round(h) + 'px';
+    this.canvas.width = Math.round(w) * dpr;
+    this.canvas.height = Math.round(h) * dpr;
     this.ctx.scale(dpr, dpr);
-    this._W = w;   // logical width
-    this._H = h;   // logical height
+    this._W = Math.round(w);
+    this._H = Math.round(h);
   }
 
   _fitToWrap() {
@@ -325,13 +329,18 @@ class ShikakuGame {
 
   resize() {
     const dpr = window.devicePixelRatio || 1;
-    const w = this.wrap.clientWidth || 560;
-    const h = Math.min(Math.max(w*0.75,300), window.innerHeight-280);
-    this.wrap.style.height = h+'px';
-    this.canvas.width = w*dpr;
-    this.canvas.height = h*dpr;
-    this.ctx.scale(dpr,dpr);
-    this._W = w; this._H = h;
+    const {rows, cols} = this.puzzle;
+    const maxW = Math.min(this.wrap.clientWidth || 800, 800);
+    const aspect = rows / cols;
+    const maxH = Math.min(window.innerHeight * 0.85, maxW * aspect);
+    const w = Math.min(maxW, maxH / aspect);
+    const h = w * aspect;
+    this.wrap.style.height = Math.round(h) + 'px';
+    this.canvas.width = Math.round(w) * dpr;
+    this.canvas.height = Math.round(h) * dpr;
+    this.ctx.scale(dpr, dpr);
+    this._W = Math.round(w);
+    this._H = Math.round(h);
     this._fitToWrap();
     this.render();
   }
