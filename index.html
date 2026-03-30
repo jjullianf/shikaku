@@ -751,8 +751,10 @@ const origCanvas = document.getElementById('game-canvas');
   }, true); // capture phase — fires before game's own listeners
 });
 
+let solvedElapsed=0;
 game.onSolve=(elapsed)=>{
   clearInterval(timerInterval);
+  solvedElapsed=elapsed;
   document.getElementById('timer').textContent=fmtTime(elapsed);
   const todayStr=`${now.getFullYear()}-${now.getMonth()+1}-${now.getDate()}`;
   if(stats.lastSolvedDate!==todayStr){
@@ -771,9 +773,8 @@ document.getElementById('reset-btn').addEventListener('click',()=>{
   // Keep timer running, don't reset startTime
 });
 function shareResult(){
-  const elapsed=Math.floor((Date.now()-game.startTime)/1000);
   const text=game.solved
-    ? `⏱️ ${fmtTime(elapsed)}\nCan you beat that? 🧩 shikaku.ch`
+    ? `⏱️ ${fmtTime(solvedElapsed)}\nCan you beat that? 🧩 shikaku.ch`
     : `🧩 shikaku.ch`;
   const waUrl=`https://wa.me/?text=${encodeURIComponent(text)}`;
   if(navigator.share) navigator.share({text});

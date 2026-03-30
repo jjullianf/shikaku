@@ -539,7 +539,7 @@ class ShikakuGame {
 }
 
 // ── PAGE LOGIC ───────────────────────────────────────────────────────────────
-let game=null, timerInterval=null, puzzleIndex=1;
+let game=null, timerInterval=null, puzzleIndex=1, solvedElapsed=0;
 function fmtTime(s){return `${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`;}
 
 function loadPuzzle(rows, cols, name, isNew) {
@@ -557,6 +557,8 @@ function loadPuzzle(rows, cols, name, isNew) {
   }, 500);
   game.onSolve = elapsed => {
     clearInterval(timerInterval);
+    timerInterval = null;
+    solvedElapsed = elapsed;
     document.getElementById('timer').textContent = fmtTime(elapsed);
     document.getElementById('win-time').textContent = fmtTime(elapsed);
     document.getElementById('win-desc').textContent = `${rows}×${cols} puzzle solved`;
@@ -593,7 +595,7 @@ function shareResult(rows, cols, elapsed) {
 }
 document.getElementById('win-share').addEventListener('click',()=>{
   const a=document.querySelector('.size-btn.active');
-  shareResult(+a.dataset.rows,+a.dataset.cols,Math.floor((Date.now()-game.startTime)/1000));
+  shareResult(+a.dataset.rows,+a.dataset.cols,solvedElapsed);
 });
 window.addEventListener('resize',()=>game?.resize());
 
