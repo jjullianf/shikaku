@@ -136,6 +136,7 @@ main{padding-top:56px;min-height:100vh}
     <span class="time-display" id="win-time">—</span>
     <div class="win-card-btns">
       <button class="btn btn-primary" id="win-next">→ Next puzzle</button>
+      <button class="btn" id="win-share">↗ Share</button>
       <button class="btn" id="win-close">✕ Close</button>
     </div>
   </div>
@@ -730,6 +731,15 @@ document.getElementById('win-next').addEventListener('click', () => {
   document.getElementById('win-overlay').classList.remove('show');
   const a = document.querySelector('.size-btn.active');
   loadPuzzle(+a.dataset.rows, +a.dataset.cols, a.dataset.name, true);
+});
+document.getElementById('win-share').addEventListener('click', () => {
+  const elapsed = Math.floor((Date.now() - game.startTime) / 1000);
+  const a = document.querySelector('.size-btn.active');
+  const size = `${a.dataset.rows}×${a.dataset.cols}`;
+  const text = `⏱️ ${fmtTime(elapsed)} (${size})\nbist du schneller? 🧩 shikaku.ch`;
+  const waUrl = `https://wa.me/?text=${encodeURIComponent(text)}`;
+  if (navigator.share) navigator.share({text});
+  else window.open(waUrl, '_blank');
 });
 document.getElementById('win-close').addEventListener('click', () => document.getElementById('win-overlay').classList.remove('show'));
 document.getElementById('win-overlay').addEventListener('click', e => { if(e.target===e.currentTarget) e.currentTarget.classList.remove('show'); });

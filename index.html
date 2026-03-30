@@ -747,13 +747,12 @@ document.getElementById('reset-btn').addEventListener('click',()=>game.reset());
 function shareResult(){
   const elapsed=Math.floor((Date.now()-game.startTime)/1000);
   const text=game.solved
-    ? `⏱️ ${fmtTime(elapsed)}\nbist du schneller? 🧩 shikaku.ch`
+    ? `⏱️ ${fmtTime(elapsed)} (daily)\nbist du schneller? 🧩 shikaku.ch`
     : `🧩 shikaku.ch`;
   const waUrl=`https://wa.me/?text=${encodeURIComponent(text)}`;
   if(navigator.share){
     navigator.share({text});
   } else {
-    // Desktop: open WhatsApp Web directly
     window.open(waUrl,'_blank');
   }
 }
