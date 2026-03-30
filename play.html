@@ -36,9 +36,9 @@ main{padding-top:56px;min-height:100vh}
 .game-area{display:flex;flex-direction:column;align-items:center;gap:18px}
 .game-meta{display:flex;justify-content:space-between;align-items:center;width:100%;max-width:580px;font-size:.72rem;color:var(--ink3);letter-spacing:.08em}
 .timer{font-variant-numeric:tabular-nums;color:var(--ink2)}
-.canvas-wrap{position:relative;width:100%;max-width:580px;border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden;background:var(--paper2);touch-action:none;cursor:crosshair}
-.canvas-wrap canvas{display:block;transform-origin:0 0;position:absolute;top:0;left:0}
-.zoom-hint{position:absolute;bottom:8px;right:8px;font-size:.58rem;color:var(--ink3);letter-spacing:.05em;pointer-events:none;background:var(--paper);padding:2px 7px;border-radius:2px;border:1px solid var(--border);opacity:.75;display:none}
+/* Canvas fills its container — zoom/pan done via canvas 2D context transform */
+.canvas-wrap{position:relative;width:100%;max-width:580px;border-radius:var(--r);box-shadow:var(--shadow);background:var(--paper2);touch-action:none;cursor:crosshair;display:block}
+.canvas-wrap canvas{display:block;width:100%;height:100%}
 .zoom-controls{display:flex;gap:8px;align-items:center}
 .zoom-btn{font-family:'DM Mono',monospace;font-size:1.1rem;width:34px;height:34px;display:flex;align-items:center;justify-content:center;border:1px solid var(--border);background:var(--paper2);color:var(--ink2);cursor:pointer;border-radius:var(--r);transition:all var(--t);flex-shrink:0;line-height:1}
 .zoom-btn:hover{background:var(--paper3);color:var(--ink);border-color:var(--gold2)}
@@ -107,18 +107,17 @@ main{padding-top:56px;min-height:100vh}
     </div>
     <div class="canvas-wrap" id="canvas-wrap">
       <canvas id="game-canvas"></canvas>
-      <span class="zoom-hint" id="zoom-hint">pinch to zoom · drag to pan</span>
     </div>
     <div class="game-controls">
       <button class="btn" id="reset-btn">↺ Reset</button>
       <div class="zoom-controls">
-        <button class="zoom-btn" id="zoom-out" title="Zoom out">−</button>
+        <button class="zoom-btn" id="zoom-out">−</button>
         <span class="zoom-level" id="zoom-level">100%</span>
-        <button class="zoom-btn" id="zoom-in" title="Zoom in">+</button>
+        <button class="zoom-btn" id="zoom-in">+</button>
       </div>
       <button class="btn btn-primary" id="new-btn">→ New</button>
     </div>
-    <p class="game-hint">Drag to draw rectangles · Pinch or +/− to zoom · Right-click to erase</p>
+    <p class="game-hint">Drag to draw · Scroll or pinch to zoom · Pan when zoomed in · Click red to erase</p>
   </div>
 </div></main>
 
@@ -136,318 +135,583 @@ main{padding-top:56px;min-height:100vh}
 </div>
 
 <script>
-// ── ENGINE ──────────────────────────────────────────────────────────────────
-function maxRectArea(rows,cols){const c=rows*cols;if(c<=25)return 6;if(c<=100)return 10;if(c<=400)return 16;return 20;}
+// ── PUZZLE GENERATOR ────────────────────────────────────────────────────────
 function mulberry32(seed){return function(){seed|=0;seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296};}
+function getDailySeed(){const d=new Date();return d.getFullYear()*10000+(d.getMonth()+1)*100+d.getDate();}
+function maxRectArea(rows,cols){const c=rows*cols;if(c<=25)return 6;if(c<=100)return 10;if(c<=400)return 16;return 20;}
 function generateSimplePuzzle(rows,cols,seed){const rng=mulberry32(seed),rects=[],grid=Array.from({length:rows},()=>new Array(cols).fill(-1)),clues=Array.from({length:rows},()=>new Array(cols).fill(0));for(let r=0;r<rows;r++){let c=0;while(c<cols){const w=(c+1<cols&&rng()>.5)?2:1,aw=Math.min(w,cols-c),id=rects.length,cc2=c+Math.floor(rng()*aw);rects.push({r1:r,c1:c,r2:r,c2:c+aw-1,clueR:r,clueC:cc2,area:aw});for(let x=c;x<c+aw;x++){grid[r][x]=id;clues[r][x]=0;}clues[r][cc2]=aw;c+=aw;}}return{rows,cols,clues,solution:rects,grid};}
 function generatePuzzle(rows,cols,seed){const rng=mulberry32(seed),maxArea=maxRectArea(rows,cols),grid=Array.from({length:rows},()=>new Array(cols).fill(-1)),rects=[];let attempts=0;while(true){let startR=-1,startC=-1;outer:for(let r=0;r<rows;r++)for(let c=0;c<cols;c++)if(grid[r][c]===-1){startR=r;startC=c;break outer;}if(startR===-1)break;let placed=false;const maxH=Math.min(rows-startR,maxArea),maxW=Math.min(cols-startC,maxArea),cands=[];for(let h=1;h<=maxH;h++)for(let w=1;w<=maxW;w++)if(h*w<=maxArea)cands.push([h,w]);for(let i=cands.length-1;i>0;i--){const j=Math.floor(rng()*(i+1));[cands[i],cands[j]]=[cands[j],cands[i]];}for(const[h,w]of cands){let fits=true;for(let r=startR;r<startR+h&&fits;r++)for(let c=startC;c<startC+w&&fits;c++)if(grid[r][c]!==-1)fits=false;if(!fits)continue;const id=rects.length,clueR=startR+Math.floor(rng()*h),clueC=startC+Math.floor(rng()*w);for(let r=startR;r<startR+h;r++)for(let c=startC;c<startC+w;c++)grid[r][c]=id;rects.push({r1:startR,c1:startC,r2:startR+h-1,c2:startC+w-1,clueR,clueC,area:h*w});placed=true;break;}if(!placed){attempts++;if(attempts>300)return generateSimplePuzzle(rows,cols,seed+attempts);for(let r=0;r<rows;r++)grid[r].fill(-1);rects.length=0;rng();rng();}}const clues=Array.from({length:rows},()=>new Array(cols).fill(0));for(const rect of rects)clues[rect.clueR][rect.clueC]=rect.area;return{rows,cols,clues,solution:rects,grid};}
 
-function drawPuzzle(ctx,puzzle,playerRects,state,cs){
-  const{rows,cols,clues}=puzzle,W=cols*cs,H=rows*cs;
-  const dk=window.matchMedia('(prefers-color-scheme: dark)').matches;
-  const C=dk?{bg:'#111110',g:'rgba(255,255,255,0.08)',b:'rgba(255,255,255,0.22)',cl:'#f0ede0',rf:'rgba(180,160,100,0.15)',rs:'rgba(210,185,110,0.8)',ef:'rgba(200,80,80,0.12)',es:'rgba(220,90,90,0.6)',pf:'rgba(150,140,100,0.22)',ps:'rgba(200,180,100,0.55)',sf:'rgba(80,160,100,0.18)',ss:'rgba(80,190,110,0.8)'}:{bg:'#faf9f5',g:'rgba(0,0,0,0.08)',b:'rgba(0,0,0,0.25)',cl:'#1a1916',rf:'rgba(140,110,40,0.09)',rs:'rgba(110,85,25,0.7)',ef:'rgba(200,60,60,0.08)',es:'rgba(200,60,60,0.55)',pf:'rgba(100,85,40,0.13)',ps:'rgba(110,85,25,0.45)',sf:'rgba(50,140,80,0.12)',ss:'rgba(50,140,80,0.65)'};
-  ctx.clearRect(0,0,W,H);ctx.fillStyle=C.bg;ctx.fillRect(0,0,W,H);
-  for(const p of playerRects){const area=(p.r2-p.r1+1)*(p.c2-p.c1+1);let cnt=0,val=0;for(let r=p.r1;r<=p.r2;r++)for(let c=p.c1;c<=p.c2;c++)if(clues[r][c]>0){cnt++;val=clues[r][c];}const ok=cnt===1&&val===area;ctx.fillStyle=state.solved?C.sf:(ok?C.rf:C.ef);ctx.fillRect(p.c1*cs+1,p.r1*cs+1,(p.c2-p.c1+1)*cs-2,(p.r2-p.r1+1)*cs-2);ctx.strokeStyle=state.solved?C.ss:(ok?C.rs:C.es);ctx.lineWidth=2;ctx.strokeRect(p.c1*cs+1.5,p.r1*cs+1.5,(p.c2-p.c1+1)*cs-3,(p.r2-p.r1+1)*cs-3);}
-  if(state.preview){
-    const{r1,c1,r2,c2}=state.preview;
-    const pw=(c2-c1+1)*cs,ph=(r2-r1+1)*cs,px=c1*cs,py=r1*cs;
-    const area=(c2-c1+1)*(r2-r1+1);
-    ctx.fillStyle=C.pf;ctx.fillRect(px,py,pw,ph);
-    ctx.strokeStyle=C.ps;ctx.lineWidth=2;ctx.setLineDash([4,3]);
-    ctx.strokeRect(px+1,py+1,pw-2,ph-2);ctx.setLineDash([]);
-    // Area label — shown in the center of the preview rect
-    const lfs=Math.max(Math.min(cs*0.65,28),12);
-    const label=String(area);
-    ctx.font=`700 ${lfs}px "DM Mono",monospace`;
-    const tw=ctx.measureText(label).width;
-    const lx=px+pw/2,ly=py+ph/2;
-    // Background pill
-    const pad=lfs*0.35;
-    ctx.fillStyle=dk?'rgba(30,28,22,0.82)':'rgba(250,249,245,0.88)';
-    ctx.beginPath();ctx.roundRect(lx-tw/2-pad,ly-lfs/2-pad*0.6,tw+pad*2,lfs+pad*1.2,4);ctx.fill();
-    ctx.fillStyle=dk?'#c4a565':'#8a6f3a';
-    ctx.textAlign='center';ctx.textBaseline='middle';
-    ctx.fillText(label,lx,ly);
-  }
-  for(let r=0;r<=rows;r++){ctx.strokeStyle=(r%5===0)?C.b:C.g;ctx.lineWidth=(r%5===0)?1:.5;ctx.beginPath();ctx.moveTo(0,r*cs);ctx.lineTo(W,r*cs);ctx.stroke();}
-  for(let c=0;c<=cols;c++){ctx.strokeStyle=(c%5===0)?C.b:C.g;ctx.lineWidth=(c%5===0)?1:.5;ctx.beginPath();ctx.moveTo(c*cs,0);ctx.lineTo(c*cs,H);ctx.stroke();}
-  ctx.strokeStyle=C.b;ctx.lineWidth=2;ctx.strokeRect(1,1,W-2,H-2);
-  const fs=Math.max(Math.min(cs*0.52,24),10);ctx.textAlign='center';ctx.textBaseline='middle';
-  for(let r=0;r<rows;r++)for(let c=0;c<cols;c++)if(clues[r][c]>0){const x=c*cs+cs/2,y=r*cs+cs/2;if(cs<28){ctx.fillStyle=C.bg;const p=fs*0.38;ctx.fillRect(x-p*1.5,y-p,p*3,p*2);}ctx.font=`600 ${fs}px "DM Mono",monospace`;ctx.fillStyle=C.cl;ctx.fillText(clues[r][c],x,y);}
-}
-// ── END ENGINE ──────────────────────────────────────────────────────────────
+// ── GAME ENGINE ─────────────────────────────────────────────────────────────
+// Cell size in puzzle-space (always rendered at this resolution, then zoomed)
+const BASE_CELL = 52;
 
-class ZoomGame {
-  constructor(puzzle,wrap,canvas){
-    this.puzzle=puzzle;this.wrap=wrap;this.canvas=canvas;this.ctx=canvas.getContext('2d');
-    this.playerRects=[];this.solved=false;this.startTime=Date.now();this.onSolve=null;
-    // scale/pan are in "wrap pixels" — canvas is always rendered at full resolution
-    this.scale=1;this.panX=0;this.panY=0;this.minScale=0.25;this.maxScale=8;
-    this.state={solved:false,preview:null};
-    this.drawing=false;this.startCell=null;this.currentCell=null;
-    this._mouseStartCell=null; // track if mouse moved to distinguish click vs drag
-    this._touchState=null;
-    this.setup();this.bindEvents();this.render();
+class ShikakuGame {
+  constructor(puzzle, canvas, wrap) {
+    this.puzzle = puzzle;
+    this.canvas = canvas;
+    this.wrap = wrap;
+    this.ctx = canvas.getContext('2d');
+    this.playerRects = [];
+    this.solved = false;
+    this.startTime = Date.now();
+    this.onSolve = null;
+
+    // View transform: panX/panY in screen pixels, zoom = scale factor
+    this.zoom = 1;
+    this.panX = 0;
+    this.panY = 0;
+
+    // Interaction state
+    this.mode = 'idle'; // 'idle' | 'draw' | 'pan'
+    this.drawStart = null;
+    this.drawCurrent = null;
+    this.preview = null;
+
+    // Track if pointer moved significantly (to distinguish click from drag)
+    this.pointerMoved = false;
+    this.pointerDownPos = null;
+
+    this._setupCanvas();
+    this._bindEvents();
+    this._fitToWrap();
+    this.render();
   }
 
-  get wrapH(){return parseInt(this.wrap.style.height)||300;}
-
-  setup(){
-    const{rows,cols}=this.puzzle;
-    const dpr=window.devicePixelRatio||1;
-    const wW=this.wrap.offsetWidth||Math.min(window.innerWidth-48,580);
-    // Base cell size — always render at a large size for crisp text at any zoom
-    const baseCellTarget=Math.max(Math.round(Math.min(wW,580)/Math.max(rows,cols)),20);
-    // Render canvas at 2× for HD on retina, plus enough size for max zoom
-    this.cellSize=Math.max(baseCellTarget*2, 40);
-    this.canvas.width=cols*this.cellSize;
-    this.canvas.height=rows*this.cellSize;
-    // Physical display size of canvas = cellSize/2 * scale (we'll CSS-scale it down initially)
-    const displayCellSize=this.cellSize/2; // how big one cell looks at scale=1
-    const naturalW=cols*displayCellSize;
-    const naturalH=rows*displayCellSize;
-    const maxH=Math.min(window.innerHeight-300,580);
-    this.wrap.style.height=Math.min(naturalH,maxH)+'px';
-    // Scale so puzzle fits in wrap at start
-    const fitS=Math.min(wW/naturalW, this.wrapH/naturalH, 1);
-    this.scale=fitS;
-    // The CSS scale we apply = scale * (displayCellSize/cellSize) = scale * 0.5
-    this.panX=(wW-naturalW*fitS)/2;
-    this.panY=(this.wrapH-naturalH*fitS)/2;
-    this._applyT();this._updateLabel();
+  // ── Setup ──
+  _setupCanvas() {
+    const dpr = window.devicePixelRatio || 1;
+    const w = this.wrap.clientWidth || 560;
+    const h = Math.min(Math.max(w * 0.75, 300), window.innerHeight - 280);
+    this.wrap.style.height = h + 'px';
+    // Canvas resolution matches physical pixels
+    this.canvas.width = w * dpr;
+    this.canvas.height = h * dpr;
+    this.ctx.scale(dpr, dpr);
+    this._W = w;   // logical width
+    this._H = h;   // logical height
   }
 
-  // The canvas is rendered at 2× cell size, so we scale it by 0.5 * user_scale
-  _cssScale(){return this.scale*0.5;}
-
-  _applyT(){
-    const s=this._cssScale();
-    this.canvas.style.transform=`translate(${this.panX}px,${this.panY}px) scale(${s})`;
-    this.canvas.style.transformOrigin='0 0';
-  }
-  _updateLabel(){document.getElementById('zoom-level').textContent=Math.round(this.scale*100)+'%';}
-
-  _clamp(){
-    const wW=this.wrap.offsetWidth,wH=this.wrapH,m=50;
-    const s=this._cssScale();
-    this.panX=Math.max(-(this.canvas.width*s-m),Math.min(wW-m,this.panX));
-    this.panY=Math.max(-(this.canvas.height*s-m),Math.min(wH-m,this.panY));
+  _fitToWrap() {
+    const {rows, cols} = this.puzzle;
+    const puzzleW = cols * BASE_CELL;
+    const puzzleH = rows * BASE_CELL;
+    const fitZoom = Math.min(this._W / puzzleW, this._H / puzzleH) * 0.96;
+    this.zoom = fitZoom;
+    this.panX = (this._W - puzzleW * this.zoom) / 2;
+    this.panY = (this._H - puzzleH * this.zoom) / 2;
+    this._updateZoomLabel();
   }
 
-  _zoomAt(factor,cx,cy){
-    const ns=Math.max(this.minScale,Math.min(this.maxScale,this.scale*factor));
-    const sc=ns/this.scale;
-    this.panX=cx-sc*(cx-this.panX);
-    this.panY=cy-sc*(cy-this.panY);
-    this.scale=ns;this._clamp();this._applyT();this._updateLabel();
+  _updateZoomLabel() {
+    const el = document.getElementById('zoom-level');
+    if (el) el.textContent = Math.round(this.zoom * 100) + '%';
   }
 
-  _toCell(wx,wy){
-    const s=this._cssScale();
-    const cx=(wx-this.panX)/s,cy=(wy-this.panY)/s;
-    const c=Math.floor(cx/this.cellSize),r=Math.floor(cy/this.cellSize);
-    if(r<0||r>=this.puzzle.rows||c<0||c>=this.puzzle.cols)return null;
-    return{r,c};
+  // ── Coordinate conversion ──
+  // Screen (canvas element) → puzzle space
+  _screenToWorld(sx, sy) {
+    return {
+      x: (sx - this.panX) / this.zoom,
+      y: (sy - this.panY) / this.zoom
+    };
   }
 
-  _wPos(e,touch){
-    const rect=this.wrap.getBoundingClientRect();
-    const src=touch||(e.touches?e.touches[0]:e);
-    return{x:src.clientX-rect.left,y:src.clientY-rect.top};
+  _worldToCell(wx, wy) {
+    const c = Math.floor(wx / BASE_CELL);
+    const r = Math.floor(wy / BASE_CELL);
+    const {rows, cols} = this.puzzle;
+    if (r < 0 || r >= rows || c < 0 || c >= cols) return null;
+    return {r, c};
   }
 
-  // Is the rect at this cell invalid (red)?
-  _isInvalidAt(r,c){
-    const clues=this.puzzle.clues;
-    for(const p of this.playerRects){
-      if(p.r1<=r&&p.r2>=r&&p.c1<=c&&p.c2>=c){
-        const area=(p.r2-p.r1+1)*(p.c2-p.c1+1);
-        let cnt=0,val=0;
-        for(let pr=p.r1;pr<=p.r2;pr++)for(let pc=p.c1;pc<=p.c2;pc++)if(clues[pr][pc]>0){cnt++;val=clues[pr][pc];}
-        return !(cnt===1&&val===area);
-      }
-    }
-    return false;
+  _screenToCell(sx, sy) {
+    const w = this._screenToWorld(sx, sy);
+    return this._worldToCell(w.x, w.y);
   }
 
-  bindEvents(){
-    const w=this.wrap;
+  // Get event position relative to canvas element (logical pixels)
+  _evPos(e, touch) {
+    const rect = this.canvas.getBoundingClientRect();
+    const dpr = window.devicePixelRatio || 1;
+    const src = touch || (e.touches ? e.touches[0] : e);
+    // getBoundingClientRect gives CSS pixels; canvas is dpr× larger
+    // but we already scaled ctx, so just use CSS px
+    return {
+      x: src.clientX - rect.left,
+      y: src.clientY - rect.top
+    };
+  }
 
-    // Mouse
-    w.addEventListener('mousedown',e=>{
-      if(e.button!==0)return;
-      if(this.solved)return;
-      const p=this._wPos(e),cell=this._toCell(p.x,p.y);
-      if(!cell)return;
-      this._mouseStartCell=cell;
-      this._mouseMoved=false;
-      // If clicking on an invalid (red) rect, erase it immediately
-      if(this._isInvalidAt(cell.r,cell.c)){
-        this.eraseAt(cell.r,cell.c);
-        this._mouseStartCell=null;
+  // ── Zoom/Pan ──
+  _clampPan() {
+    const {rows, cols} = this.puzzle;
+    const pw = cols * BASE_CELL * this.zoom;
+    const ph = rows * BASE_CELL * this.zoom;
+    const margin = 60;
+    this.panX = Math.max(-(pw - margin), Math.min(this._W - margin, this.panX));
+    this.panY = Math.max(-(ph - margin), Math.min(this._H - margin, this.panY));
+  }
+
+  zoomAt(factor, sx, sy) {
+    const newZoom = Math.max(0.3, Math.min(8, this.zoom * factor));
+    const f = newZoom / this.zoom;
+    this.panX = sx - f * (sx - this.panX);
+    this.panY = sy - f * (sy - this.panY);
+    this.zoom = newZoom;
+    this._clampPan();
+    this._updateZoomLabel();
+    this.render();
+  }
+
+  zoomIn()  { this.zoomAt(1.35, this._W/2, this._H/2); }
+  zoomOut() { this.zoomAt(1/1.35, this._W/2, this._H/2); }
+
+  // ── Rect logic ──
+  _rectIsValid(p) {
+    const clues = this.puzzle.clues;
+    const area = (p.r2-p.r1+1)*(p.c2-p.c1+1);
+    let cnt=0, val=0;
+    for(let r=p.r1;r<=p.r2;r++) for(let c=p.c1;c<=p.c2;c++) if(clues[r][c]>0){cnt++;val=clues[r][c];}
+    return cnt===1 && val===area;
+  }
+
+  _rectAt(r, c) {
+    return this.playerRects.find(p => p.r1<=r && p.r2>=r && p.c1<=c && p.c2>=c) || null;
+  }
+
+  placeRect(r1,c1,r2,c2) {
+    // Remove overlapping rects
+    this.playerRects = this.playerRects.filter(p => !(p.r1<=r2&&p.r2>=r1&&p.c1<=c2&&p.c2>=c1));
+    this.playerRects.push({r1,c1,r2,c2});
+    this.render();
+    this._checkSolution();
+  }
+
+  eraseAt(r,c) {
+    this.playerRects = this.playerRects.filter(p => !(p.r1<=r&&p.r2>=r&&p.c1<=c&&p.c2>=c));
+    this.render();
+  }
+
+  _checkSolution() {
+    const {rows,cols,clues} = this.puzzle;
+    const cov = Array.from({length:rows},()=>new Array(cols).fill(0));
+    for(const p of this.playerRects) for(let r=p.r1;r<=p.r2;r++) for(let c=p.c1;c<=p.c2;c++) cov[r][c]++;
+    for(let r=0;r<rows;r++) for(let c=0;c<cols;c++) if(cov[r][c]!==1) return;
+    for(const p of this.playerRects) if(!this._rectIsValid(p)) return;
+    this.solved = true;
+    this.render();
+    if(this.onSolve) this.onSolve(Math.floor((Date.now()-this.startTime)/1000));
+  }
+
+  reset() {
+    this.playerRects=[];this.solved=false;this.startTime=Date.now();
+    this.mode='idle';this.preview=null;this.render();
+  }
+
+  resize() {
+    const dpr = window.devicePixelRatio || 1;
+    const w = this.wrap.clientWidth || 560;
+    const h = Math.min(Math.max(w*0.75,300), window.innerHeight-280);
+    this.wrap.style.height = h+'px';
+    this.canvas.width = w*dpr;
+    this.canvas.height = h*dpr;
+    this.ctx.scale(dpr,dpr);
+    this._W = w; this._H = h;
+    this._fitToWrap();
+    this.render();
+  }
+
+  // ── Events ──
+  _bindEvents() {
+    const c = this.canvas;
+
+    // ── Mouse ──
+    c.addEventListener('mousedown', e => {
+      if (e.button !== 0) return;
+      if (this.solved) return;
+      const pos = this._evPos(e);
+      this.pointerDownPos = pos;
+      this.pointerMoved = false;
+      const cell = this._screenToCell(pos.x, pos.y);
+      if (!cell) return;
+
+      // Click on invalid rect → erase it immediately
+      const existing = this._rectAt(cell.r, cell.c);
+      if (existing && !this._rectIsValid(existing)) {
+        this.eraseAt(cell.r, cell.c);
+        this.pointerDownPos = null;
         return;
       }
-      this.drawing=true;this.startCell=cell;this.currentCell=cell;this.render();
-    });
-    w.addEventListener('mousemove',e=>{
-      if(!this.drawing)return;
-      this._mouseMoved=true;
-      const p=this._wPos(e),cell=this._toCell(p.x,p.y);
-      if(cell){this.currentCell=cell;this.render();}
-    });
-    w.addEventListener('mouseup',e=>{
-      if(!this.drawing)return;
-      this.drawing=false;
-      // If mouse didn't move (pure click), erase instead of placing 1×1 rect
-      if(!this._mouseMoved&&this.startCell){
-        this.eraseAt(this.startCell.r,this.startCell.c);
-        this.startCell=null;this.currentCell=null;this.state.preview=null;this.render();
-      } else {
-        this._commit();
-      }
-      this._mouseStartCell=null;
-    });
-    w.addEventListener('mouseleave',e=>{if(this.drawing){this.drawing=false;this._commit();}});
-    w.addEventListener('contextmenu',e=>{e.preventDefault();const p=this._wPos(e),cell=this._toCell(p.x,p.y);if(cell)this.eraseAt(cell.r,cell.c);});
-    w.addEventListener('wheel',e=>{e.preventDefault();const p=this._wPos(e);this._zoomAt(e.deltaY<0?1.13:1/1.13,p.x,p.y);},{passive:false});
 
-    // Touch — two-finger = zoom/pan, one-finger = depends on zoom level
-    w.addEventListener('touchstart',e=>{
-      e.preventDefault();
-      const ts=e.touches;
-      if(ts.length===1){
-        const p=this._wPos(e,ts[0]);
-        this._touchState={mode:'undecided',startPos:p,lastPos:p,startCell:this._toCell(p.x,p.y),id:ts[0].identifier};
-        if(!this.solved&&this._touchState.startCell){this.startCell=this._touchState.startCell;this.currentCell=this._touchState.startCell;}
-      } else if(ts.length>=2){
-        this.drawing=false;this.state.preview=null;this.render();
-        this._touchState={mode:'pinch',t1:{x:ts[0].clientX,y:ts[0].clientY},t2:{x:ts[1].clientX,y:ts[1].clientY}};
-      }
-    },{passive:false});
+      this.mode = 'draw';
+      this.drawStart = cell;
+      this.drawCurrent = cell;
+      this.preview = {r1:cell.r,c1:cell.c,r2:cell.r,c2:cell.c};
+      this.render();
+    });
 
-    w.addEventListener('touchmove',e=>{
-      e.preventDefault();
-      const ts=e.touches;
-      if(ts.length>=2){
-        // Pinch + pan
-        if(this._touchState?.mode!=='pinch'){this.drawing=false;this.state.preview=null;}
-        const t1={x:ts[0].clientX,y:ts[0].clientY},t2={x:ts[1].clientX,y:ts[1].clientY};
-        const prev=this._touchState;
-        if(prev&&prev.t1&&prev.t2){
-          const oldD=Math.hypot(prev.t1.x-prev.t2.x,prev.t1.y-prev.t2.y);
-          const newD=Math.hypot(t1.x-t2.x,t1.y-t2.y);
-          const rect=this.wrap.getBoundingClientRect();
-          const mx=(t1.x+t2.x)/2-rect.left,my=(t1.y+t2.y)/2-rect.top;
-          if(oldD>0)this._zoomAt(newD/oldD,mx,my);
-          const dx=(t1.x+t2.x)/2-(prev.t1.x+prev.t2.x)/2;
-          const dy=(t1.y+t2.y)/2-(prev.t1.y+prev.t2.y)/2;
-          this.panX+=dx;this.panY+=dy;this._clamp();this._applyT();
+    c.addEventListener('mousemove', e => {
+      if (this.mode === 'idle') return;
+      const pos = this._evPos(e);
+      if (this.pointerDownPos) {
+        const dx = pos.x - this.pointerDownPos.x;
+        const dy = pos.y - this.pointerDownPos.y;
+        if (Math.hypot(dx,dy) > 4) this.pointerMoved = true;
+      }
+
+      if (this.mode === 'pan') {
+        // Middle mouse or space+drag for pan (handled below)
+        return;
+      }
+
+      if (this.mode === 'draw' && this.drawStart) {
+        const cell = this._screenToCell(pos.x, pos.y);
+        if (cell) {
+          this.drawCurrent = cell;
+          this.preview = {
+            r1:Math.min(this.drawStart.r,cell.r), c1:Math.min(this.drawStart.c,cell.c),
+            r2:Math.max(this.drawStart.r,cell.r), c2:Math.max(this.drawStart.c,cell.c)
+          };
+          this.render();
         }
-        this._touchState={mode:'pinch',t1,t2};
+      }
+    });
+
+    c.addEventListener('mouseup', e => {
+      if (this.mode === 'draw' && this.drawStart) {
+        if (!this.pointerMoved) {
+          // Pure click — erase whatever is here
+          this.eraseAt(this.drawStart.r, this.drawStart.c);
+        } else if (this.preview) {
+          this.placeRect(this.preview.r1, this.preview.c1, this.preview.r2, this.preview.c2);
+        }
+      }
+      this.mode = 'idle';
+      this.drawStart = null;
+      this.drawCurrent = null;
+      this.preview = null;
+      this.pointerDownPos = null;
+      this.render();
+    });
+
+    c.addEventListener('mouseleave', e => {
+      if (this.mode === 'draw' && this.preview) {
+        this.placeRect(this.preview.r1, this.preview.c1, this.preview.r2, this.preview.c2);
+      }
+      this.mode = 'idle';
+      this.drawStart = null;
+      this.preview = null;
+      this.render();
+    });
+
+    // Right-click → erase
+    c.addEventListener('contextmenu', e => {
+      e.preventDefault();
+      const pos = this._evPos(e);
+      const cell = this._screenToCell(pos.x, pos.y);
+      if (cell) this.eraseAt(cell.r, cell.c);
+    });
+
+    // Scroll wheel → zoom (desktop)
+    c.addEventListener('wheel', e => {
+      e.preventDefault();
+      const pos = this._evPos(e);
+      this.zoomAt(e.deltaY < 0 ? 1.12 : 1/1.12, pos.x, pos.y);
+    }, {passive: false});
+
+    // ── Touch ──
+    let lastTouches = null;
+
+    c.addEventListener('touchstart', e => {
+      e.preventDefault();
+      const ts = e.touches;
+
+      if (ts.length === 1 && !this.solved) {
+        const pos = this._evPos(e, ts[0]);
+        this.pointerDownPos = pos;
+        this.pointerMoved = false;
+        lastTouches = null;
+
+        const cell = this._screenToCell(pos.x, pos.y);
+        if (!cell) return;
+
+        // Click on invalid rect → erase
+        const existing = this._rectAt(cell.r, cell.c);
+        if (existing && !this._rectIsValid(existing)) {
+          this.eraseAt(cell.r, cell.c);
+          this.pointerDownPos = null;
+          return;
+        }
+
+        this.mode = 'draw';
+        this.drawStart = cell;
+        this.drawCurrent = cell;
+        this.preview = {r1:cell.r,c1:cell.c,r2:cell.r,c2:cell.c};
+        this.render();
+
+      } else if (ts.length === 2) {
+        // Two fingers → switch to pinch/pan mode
+        this.mode = 'pan';
+        this.drawStart = null;
+        this.preview = null;
+        lastTouches = [{x:ts[0].clientX,y:ts[0].clientY},{x:ts[1].clientX,y:ts[1].clientY}];
+        this.render();
+      }
+    }, {passive: false});
+
+    c.addEventListener('touchmove', e => {
+      e.preventDefault();
+      const ts = e.touches;
+
+      if (ts.length === 2) {
+        // Pinch zoom + pan
+        this.mode = 'pan';
+        this.preview = null;
+        const cur = [{x:ts[0].clientX,y:ts[0].clientY},{x:ts[1].clientX,y:ts[1].clientY}];
+        if (lastTouches && lastTouches.length === 2) {
+          const rect = this.canvas.getBoundingClientRect();
+          const oldD = Math.hypot(lastTouches[0].x-lastTouches[1].x, lastTouches[0].y-lastTouches[1].y);
+          const newD = Math.hypot(cur[0].x-cur[1].x, cur[0].y-cur[1].y);
+          const midX = (cur[0].x+cur[1].x)/2 - rect.left;
+          const midY = (cur[0].y+cur[1].y)/2 - rect.top;
+          if (oldD > 1) this.zoomAt(newD/oldD, midX, midY);
+          // Pan from midpoint movement
+          const oldMidX = (lastTouches[0].x+lastTouches[1].x)/2 - rect.left;
+          const oldMidY = (lastTouches[0].y+lastTouches[1].y)/2 - rect.top;
+          this.panX += midX - oldMidX;
+          this.panY += midY - oldMidY;
+          this._clampPan();
+          this.render();
+        }
+        lastTouches = cur;
         return;
       }
-      if(ts.length===1&&this._touchState){
-        const p=this._wPos(e,ts[0]);
-        const dx=p.x-this._touchState.startPos.x,dy=p.y-this._touchState.startPos.y;
-        const dist=Math.hypot(dx,dy);
-        if(this._touchState.mode==='undecided'&&dist>8){
-          // Zoomed in → pan, otherwise draw
-          this._touchState.mode=this.scale>1.15?'pan':'draw';
-          if(this._touchState.mode==='draw'&&!this.solved&&this._touchState.startCell){
-            this.drawing=true;
+
+      if (ts.length === 1) {
+        const pos = this._evPos(e, ts[0]);
+        if (this.pointerDownPos) {
+          const dx = pos.x - this.pointerDownPos.x;
+          const dy = pos.y - this.pointerDownPos.y;
+          if (Math.hypot(dx,dy) > 5) this.pointerMoved = true;
+        }
+
+        if (this.mode === 'draw' && this.drawStart) {
+          const cell = this._screenToCell(pos.x, pos.y);
+          if (cell) {
+            this.drawCurrent = cell;
+            this.preview = {
+              r1:Math.min(this.drawStart.r,cell.r), c1:Math.min(this.drawStart.c,cell.c),
+              r2:Math.max(this.drawStart.r,cell.r), c2:Math.max(this.drawStart.c,cell.c)
+            };
+            this.render();
           }
         }
-        if(this._touchState.mode==='pan'){
-          this.panX+=p.x-this._touchState.lastPos.x;
-          this.panY+=p.y-this._touchState.lastPos.y;
-          this._clamp();this._applyT();
-        } else if(this._touchState.mode==='draw'&&this.drawing){
-          const cell=this._toCell(p.x,p.y);
-          if(cell){this.currentCell=cell;this.render();}
-        }
-        this._touchState.lastPos=p;
       }
-    },{passive:false});
+    }, {passive: false});
 
-    w.addEventListener('touchend',e=>{
+    c.addEventListener('touchend', e => {
       e.preventDefault();
-      if(!this._touchState)return;
-      if(this._touchState.mode==='draw'&&this.drawing){
-        this.drawing=false;this._commit();
-      } else if(this._touchState.mode==='undecided'){
-        // Tap = erase
-        if(this._touchState.startCell&&!this.solved)this.eraseAt(this._touchState.startCell.r,this._touchState.startCell.c);
+      if (e.touches.length === 0) {
+        if (this.mode === 'draw' && this.drawStart) {
+          if (!this.pointerMoved) {
+            // Tap → erase
+            this.eraseAt(this.drawStart.r, this.drawStart.c);
+          } else if (this.preview) {
+            this.placeRect(this.preview.r1, this.preview.c1, this.preview.r2, this.preview.c2);
+          }
+        }
+        this.mode = 'idle';
+        this.drawStart = null;
+        this.preview = null;
+        this.pointerDownPos = null;
+        lastTouches = null;
+        this.render();
+      } else if (e.touches.length === 1) {
+        // One finger lifted from two-finger gesture → reset to idle
+        this.mode = 'idle';
+        lastTouches = null;
       }
-      if(e.touches.length===0)this._touchState=null;
-    },{passive:false});
+    }, {passive: false});
   }
 
-  _commit(){
-    if(this.startCell&&this.currentCell){
-      const r1=Math.min(this.startCell.r,this.currentCell.r),c1=Math.min(this.startCell.c,this.currentCell.c),r2=Math.max(this.startCell.r,this.currentCell.r),c2=Math.max(this.startCell.c,this.currentCell.c);
-      this.placeRect(r1,c1,r2,c2);
+  // ── Render ──
+  render() {
+    const ctx = this.ctx;
+    const {rows, cols, clues} = this.puzzle;
+    const W = this._W, H = this._H;
+    const cs = BASE_CELL;
+    const dk = window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+    const C = dk ? {
+      bg:'#111110', grid:'rgba(255,255,255,0.07)', gridB:'rgba(255,255,255,0.2)',
+      clue:'#f0ede0', rf:'rgba(180,160,100,0.16)', rs:'rgba(210,185,110,0.85)',
+      ef:'rgba(200,70,70,0.13)', es:'rgba(220,80,80,0.7)',
+      pf:'rgba(160,145,100,0.22)', ps:'rgba(200,180,100,0.6)',
+      sf:'rgba(70,160,95,0.18)', ss:'rgba(70,190,110,0.85)',
+    } : {
+      bg:'#faf9f5', grid:'rgba(0,0,0,0.07)', gridB:'rgba(0,0,0,0.22)',
+      clue:'#1a1916', rf:'rgba(130,105,35,0.1)', rs:'rgba(100,78,22,0.75)',
+      ef:'rgba(195,55,55,0.09)', es:'rgba(195,55,55,0.65)',
+      pf:'rgba(100,85,40,0.14)', ps:'rgba(100,78,22,0.5)',
+      sf:'rgba(45,135,75,0.13)', ss:'rgba(45,135,75,0.7)',
+    };
+
+    // Background
+    ctx.clearRect(0, 0, W, H);
+    ctx.fillStyle = C.bg;
+    ctx.fillRect(0, 0, W, H);
+
+    // Apply zoom/pan transform
+    ctx.save();
+    ctx.translate(this.panX, this.panY);
+    ctx.scale(this.zoom, this.zoom);
+
+    const PW = cols * cs, PH = rows * cs;
+
+    // Fill puzzle background
+    ctx.fillStyle = C.bg;
+    ctx.fillRect(0, 0, PW, PH);
+
+    // Draw placed rects
+    for (const p of this.playerRects) {
+      const valid = this._rectIsValid(p);
+      const fill = this.solved ? C.sf : (valid ? C.rf : C.ef);
+      const stroke = this.solved ? C.ss : (valid ? C.rs : C.es);
+      const x=p.c1*cs, y=p.r1*cs, w=(p.c2-p.c1+1)*cs, h=(p.r2-p.r1+1)*cs;
+      ctx.fillStyle = fill;
+      ctx.fillRect(x+1, y+1, w-2, h-2);
+      ctx.strokeStyle = stroke;
+      ctx.lineWidth = 2 / this.zoom;
+      ctx.strokeRect(x+1.5/this.zoom, y+1.5/this.zoom, w-3/this.zoom, h-3/this.zoom);
     }
-    this.startCell=null;this.currentCell=null;this.state.preview=null;this.render();
+
+    // Draw preview
+    if (this.preview) {
+      const {r1,c1,r2,c2} = this.preview;
+      const x=c1*cs, y=r1*cs, w=(c2-c1+1)*cs, h=(r2-r1+1)*cs;
+      const area = (c2-c1+1)*(r2-r1+1);
+      ctx.fillStyle = C.pf;
+      ctx.fillRect(x, y, w, h);
+      ctx.strokeStyle = C.ps;
+      ctx.lineWidth = 2 / this.zoom;
+      ctx.setLineDash([5/this.zoom, 3/this.zoom]);
+      ctx.strokeRect(x+1/this.zoom, y+1/this.zoom, w-2/this.zoom, h-2/this.zoom);
+      ctx.setLineDash([]);
+
+      // Area count label
+      const lfs = Math.max(cs * 0.55, 14);
+      ctx.font = `700 ${lfs}px "DM Mono",monospace`;
+      const tw = ctx.measureText(String(area)).width;
+      const lx = x+w/2, ly = y+h/2;
+      const pad = lfs * 0.3;
+      ctx.fillStyle = dk ? 'rgba(20,18,14,0.85)' : 'rgba(250,249,245,0.9)';
+      ctx.beginPath();
+      ctx.roundRect(lx-tw/2-pad, ly-lfs/2-pad*0.8, tw+pad*2, lfs+pad*1.6, 4);
+      ctx.fill();
+      ctx.fillStyle = dk ? '#c4a565' : '#7a6030';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(String(area), lx, ly);
+    }
+
+    // Grid lines
+    ctx.strokeStyle = C.grid;
+    ctx.lineWidth = 0.5 / this.zoom;
+    for (let r=0; r<=rows; r++) {
+      if (r%5===0) continue;
+      ctx.beginPath(); ctx.moveTo(0,r*cs); ctx.lineTo(PW,r*cs); ctx.stroke();
+    }
+    for (let c=0; c<=cols; c++) {
+      if (c%5===0) continue;
+      ctx.beginPath(); ctx.moveTo(c*cs,0); ctx.lineTo(c*cs,PH); ctx.stroke();
+    }
+    // Bold lines every 5
+    ctx.strokeStyle = C.gridB;
+    ctx.lineWidth = 1 / this.zoom;
+    for (let r=0; r<=rows; r++) {
+      if (r%5!==0) continue;
+      ctx.beginPath(); ctx.moveTo(0,r*cs); ctx.lineTo(PW,r*cs); ctx.stroke();
+    }
+    for (let c=0; c<=cols; c++) {
+      if (c%5!==0) continue;
+      ctx.beginPath(); ctx.moveTo(c*cs,0); ctx.lineTo(c*cs,PH); ctx.stroke();
+    }
+    // Border
+    ctx.strokeStyle = C.gridB;
+    ctx.lineWidth = 2 / this.zoom;
+    ctx.strokeRect(0, 0, PW, PH);
+
+    // Clue numbers — always rendered at BASE_CELL size, crisp at any zoom
+    const fs = Math.round(cs * 0.48);
+    ctx.font = `600 ${fs}px "DM Mono",monospace`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = C.clue;
+    for (let r=0; r<rows; r++) {
+      for (let c=0; c<cols; c++) {
+        if (clues[r][c] > 0) {
+          ctx.fillText(clues[r][c], c*cs+cs/2, r*cs+cs/2);
+        }
+      }
+    }
+
+    ctx.restore();
   }
-
-  placeRect(r1,c1,r2,c2){
-    this.playerRects=this.playerRects.filter(p=>!(p.r1<=r2&&p.r2>=r1&&p.c1<=c2&&p.c2>=c1));
-    this.playerRects.push({r1,c1,r2,c2});this.render();this.checkSolution();
-  }
-
-  eraseAt(r,c){this.playerRects=this.playerRects.filter(p=>!(p.r1<=r&&p.r2>=r&&p.c1<=c&&p.c2>=c));this.render();}
-
-  checkSolution(){
-    const{rows,cols,clues}=this.puzzle;
-    const cov=Array.from({length:rows},()=>new Array(cols).fill(0));
-    for(const p of this.playerRects)for(let r=p.r1;r<=p.r2;r++)for(let c=p.c1;c<=p.c2;c++)cov[r][c]++;
-    for(let r=0;r<rows;r++)for(let c=0;c<cols;c++)if(cov[r][c]!==1)return;
-    for(const p of this.playerRects){const area=(p.r2-p.r1+1)*(p.c2-p.c1+1);let cnt=0,val=0;for(let r=p.r1;r<=p.r2;r++)for(let c=p.c1;c<=p.c2;c++)if(clues[r][c]>0){cnt++;val=clues[r][c];}if(cnt!==1||val!==area)return;}
-    this.solved=true;this.state.solved=true;this.render();
-    if(this.onSolve)this.onSolve(Math.floor((Date.now()-this.startTime)/1000));
-  }
-
-  render(){
-    if(this.drawing&&this.startCell&&this.currentCell){
-      this.state.preview={r1:Math.min(this.startCell.r,this.currentCell.r),c1:Math.min(this.startCell.c,this.currentCell.c),r2:Math.max(this.startCell.r,this.currentCell.r),c2:Math.max(this.startCell.c,this.currentCell.c)};
-    } else {this.state.preview=null;}
-    drawPuzzle(this.ctx,this.puzzle,this.playerRects,this.state,this.cellSize);
-  }
-
-  reset(){this.playerRects=[];this.solved=false;this.state.solved=false;this.startTime=Date.now();this.render();}
-  resize(){this.setup();this.render();}
-  zoomIn(){this._zoomAt(1.3,this.wrap.offsetWidth/2,this.wrapH/2);}
-  zoomOut(){this._zoomAt(1/1.3,this.wrap.offsetWidth/2,this.wrapH/2);}
 }
 
-let curRows=10,curCols=10,puzzleIndex=1,game=null,timerInterval=null;
+// ── PAGE LOGIC ───────────────────────────────────────────────────────────────
+let game = null, timerInterval = null, puzzleIndex = 1;
 function fmtTime(s){return `${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`;}
 
-function loadPuzzle(rows,cols,name,isNew){
-  if(isNew)puzzleIndex++;
-  const seed=Math.floor(Math.random()*1e9)+1;
-  const puzzle=generatePuzzle(rows,cols,seed);
-  const wrap=document.getElementById('canvas-wrap');
-  const canvas=document.getElementById('game-canvas');
-  game=new ZoomGame(puzzle,wrap,canvas);
-  document.getElementById('diff-badge').textContent=name;
-  document.getElementById('puzzle-counter').textContent=`Puzzle #${puzzleIndex}`;
-  document.getElementById('zoom-hint').style.display=(rows>=20)?'block':'none';
+function loadPuzzle(rows, cols, name, isNew) {
+  if (isNew) puzzleIndex++;
+  const seed = Math.floor(Math.random() * 1e9) + 1;
+  const puzzle = generatePuzzle(rows, cols, seed);
+  const canvas = document.getElementById('game-canvas');
+  const wrap = document.getElementById('canvas-wrap');
+  game = new ShikakuGame(puzzle, canvas, wrap);
+  document.getElementById('diff-badge').textContent = name;
+  document.getElementById('puzzle-counter').textContent = `Puzzle #${puzzleIndex}`;
   clearInterval(timerInterval);
-  timerInterval=setInterval(()=>{document.getElementById('timer').textContent=fmtTime(Math.floor((Date.now()-game.startTime)/1000));},500);
-  game.onSolve=(elapsed)=>{clearInterval(timerInterval);document.getElementById('timer').textContent=fmtTime(elapsed);document.getElementById('win-time').textContent=fmtTime(elapsed);document.getElementById('win-desc').textContent=`${rows}×${cols} puzzle solved`;setTimeout(()=>document.getElementById('win-overlay').classList.add('show'),500);};
+  timerInterval = setInterval(() => {
+    document.getElementById('timer').textContent = fmtTime(Math.floor((Date.now()-game.startTime)/1000));
+  }, 500);
+  game.onSolve = elapsed => {
+    clearInterval(timerInterval);
+    document.getElementById('timer').textContent = fmtTime(elapsed);
+    document.getElementById('win-time').textContent = fmtTime(elapsed);
+    document.getElementById('win-desc').textContent = `${rows}×${cols} puzzle solved`;
+    setTimeout(() => document.getElementById('win-overlay').classList.add('show'), 600);
+  };
 }
 
-document.querySelectorAll('.size-btn').forEach(btn=>{btn.addEventListener('click',()=>{document.querySelectorAll('.size-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');curRows=+btn.dataset.rows;curCols=+btn.dataset.cols;puzzleIndex=0;loadPuzzle(curRows,curCols,btn.dataset.name,true);});});
-document.getElementById('zoom-in').addEventListener('click',()=>game?.zoomIn());
-document.getElementById('zoom-out').addEventListener('click',()=>game?.zoomOut());
-document.getElementById('reset-btn').addEventListener('click',()=>game?.reset());
-document.getElementById('new-btn').addEventListener('click',()=>{const a=document.querySelector('.size-btn.active');loadPuzzle(curRows,curCols,a.dataset.name,true);});
-document.getElementById('win-next').addEventListener('click',()=>{document.getElementById('win-overlay').classList.remove('show');const a=document.querySelector('.size-btn.active');loadPuzzle(curRows,curCols,a.dataset.name,true);});
-document.getElementById('win-close').addEventListener('click',()=>document.getElementById('win-overlay').classList.remove('show'));
-document.getElementById('win-overlay').addEventListener('click',e=>{if(e.target===e.currentTarget)e.currentTarget.classList.remove('show');});
-window.addEventListener('resize',()=>game?.resize());
-loadPuzzle(10,10,'Classic',false);
+document.querySelectorAll('.size-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.size-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    puzzleIndex = 0;
+    loadPuzzle(+btn.dataset.rows, +btn.dataset.cols, btn.dataset.name, true);
+  });
+});
+
+document.getElementById('zoom-in').addEventListener('click', () => game?.zoomIn());
+document.getElementById('zoom-out').addEventListener('click', () => game?.zoomOut());
+document.getElementById('reset-btn').addEventListener('click', () => game?.reset());
+document.getElementById('new-btn').addEventListener('click', () => {
+  const a = document.querySelector('.size-btn.active');
+  loadPuzzle(+a.dataset.rows, +a.dataset.cols, a.dataset.name, true);
+});
+document.getElementById('win-next').addEventListener('click', () => {
+  document.getElementById('win-overlay').classList.remove('show');
+  const a = document.querySelector('.size-btn.active');
+  loadPuzzle(+a.dataset.rows, +a.dataset.cols, a.dataset.name, true);
+});
+document.getElementById('win-close').addEventListener('click', () => document.getElementById('win-overlay').classList.remove('show'));
+document.getElementById('win-overlay').addEventListener('click', e => { if(e.target===e.currentTarget) e.currentTarget.classList.remove('show'); });
+window.addEventListener('resize', () => game?.resize());
+
+loadPuzzle(10, 10, 'Classic', false);
 </script>
 </body>
 </html>
