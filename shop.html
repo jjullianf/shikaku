@@ -130,15 +130,7 @@ main{padding-top:56px;min-height:100vh}.page{max-width:720px;margin:0 auto;paddi
         <li>Clean, minimal print design</li>
         <li>Perfect-bound softcover, A5 format</li>
       </ul>
-      <div class="notify-section">
-        <h3>Get notified at launch</h3>
-        <p>Leave your email and we'll send you one message when the book is available.</p>
-        <div class="notify-form">
-          <input type="email" id="email-input" placeholder="your@email.com" autocomplete="email">
-          <button class="btn btn-primary" id="notify-btn">Notify me</button>
-        </div>
-        <p class="success-msg" id="success-msg">✓ You're on the list. We'll be in touch!</p>
-      </div>
+
     </div>
   </div>
 
@@ -172,17 +164,7 @@ for(let r=0;r<rows;r++)for(let c=0;c<cols;c++)if(clues[r][c]>0)ctx.fillText(clue
 const litCells=[1,3,7,8,12,16,18,20,22,24];
 for(let i=0;i<25;i++){const s=document.createElement('span');if(litCells.includes(i))s.className='lit';document.getElementById('cover-grid').appendChild(s);}
 
-// Email notify
-document.getElementById('notify-btn').addEventListener('click',()=>{
-  const email=document.getElementById('email-input').value.trim();
-  if(!email||!email.includes('@')){document.getElementById('email-input').focus();return;}
-  const subs=JSON.parse(localStorage.getItem('shikaku_subs')||'[]');
-  if(!subs.includes(email)){subs.push(email);localStorage.setItem('shikaku_subs',JSON.stringify(subs));}
-  document.getElementById('success-msg').style.display='block';
-  document.getElementById('notify-btn').disabled=true;
-  document.getElementById('notify-btn').textContent='✓ Done';
-});
-document.getElementById('email-input').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('notify-btn').click();});
+
 
 // Sample puzzles (read-only with solution shown)
 const samples=[{rows:5,cols:5,seed:20240101,cs:42,label:'5 × 5'},{rows:10,cols:10,seed:20240202,cs:28,label:'10 × 10'},{rows:20,cols:20,seed:20240303,cs:16,label:'20 × 20'}];
