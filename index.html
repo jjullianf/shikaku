@@ -124,7 +124,7 @@ main{padding-top:56px;min-height:100vh}
       </div>
       <button class="btn" id="share-btn">↗ Share</button>
     </div>
-    <p class="game-hint">Drag to draw · Pinch or +/− to zoom · Right-click to erase</p>
+    <p class="game-hint">Drag to draw · Pinch or +/− to zoom · Click red rect to remove</p>
   </div>
   <div class="countdown">Next puzzle in <span id="countdown">—</span></div>
   <hr class="divider">
@@ -199,9 +199,11 @@ class ZoomGame {
   constructor(puzzle,wrap,canvas){
     this.puzzle=puzzle;this.wrap=wrap;this.canvas=canvas;this.ctx=canvas.getContext('2d');
     this.playerRects=[];this.solved=false;this.startTime=Date.now();this.onSolve=null;
-    this.scale=1;this.panX=0;this.panY=0;this.minScale=0.3;this.maxScale=6;
+    // scale/pan are in "wrap pixels" — canvas is always rendered at full resolution
+    this.scale=1;this.panX=0;this.panY=0;this.minScale=0.25;this.maxScale=8;
     this.state={solved:false,preview:null};
     this.drawing=false;this.startCell=null;this.currentCell=null;
+    this._mouseStartCell=null; // track if mouse moved to distinguish click vs drag
     this._touchState=null;
     this.setup();this.bindEvents();this.render();
   }
@@ -210,30 +212,44 @@ class ZoomGame {
 
   setup(){
     const{rows,cols}=this.puzzle;
+    const dpr=window.devicePixelRatio||1;
     const wW=this.wrap.offsetWidth||Math.min(window.innerWidth-48,580);
-    this.cellSize=Math.max(Math.round(Math.min(wW,580)/Math.max(rows,cols)),20);
+    // Base cell size — always render at a large size for crisp text at any zoom
+    const baseCellTarget=Math.max(Math.round(Math.min(wW,580)/Math.max(rows,cols)),20);
+    // Render canvas at 2× for HD on retina, plus enough size for max zoom
+    this.cellSize=Math.max(baseCellTarget*2, 40);
     this.canvas.width=cols*this.cellSize;
     this.canvas.height=rows*this.cellSize;
+    // Physical display size of canvas = cellSize/2 * scale (we'll CSS-scale it down initially)
+    const displayCellSize=this.cellSize/2; // how big one cell looks at scale=1
+    const naturalW=cols*displayCellSize;
+    const naturalH=rows*displayCellSize;
     const maxH=Math.min(window.innerHeight-300,580);
-    this.wrap.style.height=Math.min(this.canvas.height,maxH)+'px';
-    // Fit to view
-    const fitS=Math.min(wW/this.canvas.width, this.wrapH/this.canvas.height, 1);
+    this.wrap.style.height=Math.min(naturalH,maxH)+'px';
+    // Scale so puzzle fits in wrap at start
+    const fitS=Math.min(wW/naturalW, this.wrapH/naturalH, 1);
     this.scale=fitS;
-    this.panX=(wW-this.canvas.width*this.scale)/2;
-    this.panY=(this.wrapH-this.canvas.height*this.scale)/2;
+    // The CSS scale we apply = scale * (displayCellSize/cellSize) = scale * 0.5
+    this.panX=(wW-naturalW*fitS)/2;
+    this.panY=(this.wrapH-naturalH*fitS)/2;
     this._applyT();this._updateLabel();
   }
 
+  // The canvas is rendered at 2× cell size, so we scale it by 0.5 * user_scale
+  _cssScale(){return this.scale*0.5;}
+
   _applyT(){
-    this.canvas.style.transform=`translate(${this.panX}px,${this.panY}px) scale(${this.scale})`;
+    const s=this._cssScale();
+    this.canvas.style.transform=`translate(${this.panX}px,${this.panY}px) scale(${s})`;
     this.canvas.style.transformOrigin='0 0';
   }
   _updateLabel(){document.getElementById('zoom-level').textContent=Math.round(this.scale*100)+'%';}
 
   _clamp(){
     const wW=this.wrap.offsetWidth,wH=this.wrapH,m=50;
-    this.panX=Math.max(-(this.canvas.width*this.scale-m),Math.min(wW-m,this.panX));
-    this.panY=Math.max(-(this.canvas.height*this.scale-m),Math.min(wH-m,this.panY));
+    const s=this._cssScale();
+    this.panX=Math.max(-(this.canvas.width*s-m),Math.min(wW-m,this.panX));
+    this.panY=Math.max(-(this.canvas.height*s-m),Math.min(wH-m,this.panY));
   }
 
   _zoomAt(factor,cx,cy){
@@ -245,7 +261,8 @@ class ZoomGame {
   }
 
   _toCell(wx,wy){
-    const cx=(wx-this.panX)/this.scale,cy=(wy-this.panY)/this.scale;
+    const s=this._cssScale();
+    const cx=(wx-this.panX)/s,cy=(wy-this.panY)/s;
     const c=Math.floor(cx/this.cellSize),r=Math.floor(cy/this.cellSize);
     if(r<0||r>=this.puzzle.rows||c<0||c>=this.puzzle.cols)return null;
     return{r,c};
@@ -257,6 +274,20 @@ class ZoomGame {
     return{x:src.clientX-rect.left,y:src.clientY-rect.top};
   }
 
+  // Is the rect at this cell invalid (red)?
+  _isInvalidAt(r,c){
+    const clues=this.puzzle.clues;
+    for(const p of this.playerRects){
+      if(p.r1<=r&&p.r2>=r&&p.c1<=c&&p.c2>=c){
+        const area=(p.r2-p.r1+1)*(p.c2-p.c1+1);
+        let cnt=0,val=0;
+        for(let pr=p.r1;pr<=p.r2;pr++)for(let pc=p.c1;pc<=p.c2;pc++)if(clues[pr][pc]>0){cnt++;val=clues[pr][pc];}
+        return !(cnt===1&&val===area);
+      }
+    }
+    return false;
+  }
+
   bindEvents(){
     const w=this.wrap;
 
@@ -266,14 +297,34 @@ class ZoomGame {
       if(this.solved)return;
       const p=this._wPos(e),cell=this._toCell(p.x,p.y);
       if(!cell)return;
+      this._mouseStartCell=cell;
+      this._mouseMoved=false;
+      // If clicking on an invalid (red) rect, erase it immediately
+      if(this._isInvalidAt(cell.r,cell.c)){
+        this.eraseAt(cell.r,cell.c);
+        this._mouseStartCell=null;
+        return;
+      }
       this.drawing=true;this.startCell=cell;this.currentCell=cell;this.render();
     });
     w.addEventListener('mousemove',e=>{
       if(!this.drawing)return;
+      this._mouseMoved=true;
       const p=this._wPos(e),cell=this._toCell(p.x,p.y);
       if(cell){this.currentCell=cell;this.render();}
     });
-    w.addEventListener('mouseup',e=>{if(!this.drawing)return;this.drawing=false;this._commit();});
+    w.addEventListener('mouseup',e=>{
+      if(!this.drawing)return;
+      this.drawing=false;
+      // If mouse didn't move (pure click), erase instead of placing 1×1 rect
+      if(!this._mouseMoved&&this.startCell){
+        this.eraseAt(this.startCell.r,this.startCell.c);
+        this.startCell=null;this.currentCell=null;this.state.preview=null;this.render();
+      } else {
+        this._commit();
+      }
+      this._mouseStartCell=null;
+    });
     w.addEventListener('mouseleave',e=>{if(this.drawing){this.drawing=false;this._commit();}});
     w.addEventListener('contextmenu',e=>{e.preventDefault();const p=this._wPos(e),cell=this._toCell(p.x,p.y);if(cell)this.eraseAt(cell.r,cell.c);});
     w.addEventListener('wheel',e=>{e.preventDefault();const p=this._wPos(e);this._zoomAt(e.deltaY<0?1.13:1/1.13,p.x,p.y);},{passive:false});
