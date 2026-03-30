@@ -229,13 +229,15 @@ class ShikakuGame {
     return {r, c};
   }
 
-  // Event → canvas-local coords
+  // Event → canvas-local coords (accounts for CSS transform scale)
   _evPos(e, touch) {
     const rect = this.canvas.getBoundingClientRect();
     const src = touch || (e.touches ? e.touches[0] : e);
+    // getBoundingClientRect gives scaled (CSS) coordinates.
+    // Divide by zoom to convert back to canvas pixel space.
     return {
-      x: src.clientX - rect.left,
-      y: src.clientY - rect.top
+      x: (src.clientX - rect.left) / this.zoom,
+      y: (src.clientY - rect.top)  / this.zoom
     };
   }
 
