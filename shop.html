@@ -167,7 +167,7 @@ for(let i=0;i<25;i++){const s=document.createElement('span');if(litCells.include
 
 
 // Sample puzzles (read-only with solution shown)
-const samples=[{rows:5,cols:5,seed:20240101,cs:42,label:'5 × 5'},{rows:10,cols:10,seed:20240202,cs:28,label:'10 × 10'},{rows:20,cols:20,seed:20240303,cs:16,label:'20 × 20'}];
+const samples=[{rows:5,cols:5,seed:20240101,cs:42,label:'5 × 5'},{rows:10,cols:10,seed:20240202,cs:28,label:'10 × 10'}];
 const container=document.getElementById('sample-grid');
 samples.forEach(({rows,cols,seed,cs,label})=>{
   const puzzle=generatePuzzle(rows,cols,seed);
