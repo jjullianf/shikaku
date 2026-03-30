@@ -604,7 +604,7 @@ document.getElementById('win-close').addEventListener('click',()=>document.getEl
 document.getElementById('win-overlay').addEventListener('click',e=>{if(e.target===e.currentTarget)e.currentTarget.classList.remove('show');});
 
 function shareResult(rows, cols, elapsed) {
-  const text = `⏱️ ${fmtTime(elapsed)}\nI solved a ${rows}×${cols} Shikaku — are you faster? 🧩 shikaku.ch`;
+  const text = `⏱️ ${fmtTime(elapsed)}\nI solved a ${rows}×${cols} Shikaku — can you beat that? 🧩 shikaku.ch`;
   const waUrl = `https://wa.me/?text=${encodeURIComponent(text)}`;
   if (navigator.share) navigator.share({text});
   else window.open(waUrl, '_blank');
