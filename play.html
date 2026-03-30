@@ -381,8 +381,13 @@ class ShikakuGame {
     c.addEventListener('mouseup', e => {
       if (this.mode === 'draw' && this.drawStart) {
         if (!this.pointerMoved) {
-          // Pure click — erase whatever is here
-          this.eraseAt(this.drawStart.r, this.drawStart.c);
+          // Pure click — erase if rect already here, otherwise place 1×1
+          const existing = this._rectAt(this.drawStart.r, this.drawStart.c);
+          if (existing) {
+            this.eraseAt(this.drawStart.r, this.drawStart.c);
+          } else {
+            this.placeRect(this.drawStart.r, this.drawStart.c, this.drawStart.r, this.drawStart.c);
+          }
         } else if (this.preview) {
           this.placeRect(this.preview.r1, this.preview.c1, this.preview.r2, this.preview.c2);
         }
@@ -515,8 +520,13 @@ class ShikakuGame {
       if (e.touches.length === 0) {
         if (this.mode === 'draw' && this.drawStart) {
           if (!this.pointerMoved) {
-            // Tap → erase
-            this.eraseAt(this.drawStart.r, this.drawStart.c);
+            // Tap — erase if rect exists here, otherwise place 1×1
+            const existing = this._rectAt(this.drawStart.r, this.drawStart.c);
+            if (existing) {
+              this.eraseAt(this.drawStart.r, this.drawStart.c);
+            } else {
+              this.placeRect(this.drawStart.r, this.drawStart.c, this.drawStart.r, this.drawStart.c);
+            }
           } else if (this.preview) {
             this.placeRect(this.preview.r1, this.preview.c1, this.preview.r2, this.preview.c2);
           }

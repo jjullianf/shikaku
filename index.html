@@ -402,8 +402,13 @@ class ShikakuGame {
     c.addEventListener('mouseup', e => {
       if (this.mode === 'draw' && this.drawStart) {
         if (!this.pointerMoved) {
-          // Pure click — erase whatever is here
-          this.eraseAt(this.drawStart.r, this.drawStart.c);
+          // Pure click — erase if rect here, otherwise place 1×1
+          const existing = this._rectAt(this.drawStart.r, this.drawStart.c);
+          if (existing) {
+            this.eraseAt(this.drawStart.r, this.drawStart.c);
+          } else {
+            this.placeRect(this.drawStart.r, this.drawStart.c, this.drawStart.r, this.drawStart.c);
+          }
         } else if (this.preview) {
           this.placeRect(this.preview.r1, this.preview.c1, this.preview.r2, this.preview.c2);
         }
@@ -536,8 +541,13 @@ class ShikakuGame {
       if (e.touches.length === 0) {
         if (this.mode === 'draw' && this.drawStart) {
           if (!this.pointerMoved) {
-            // Tap → erase
-            this.eraseAt(this.drawStart.r, this.drawStart.c);
+            // Tap — erase if rect exists here, otherwise place 1×1
+            const existing = this._rectAt(this.drawStart.r, this.drawStart.c);
+            if (existing) {
+              this.eraseAt(this.drawStart.r, this.drawStart.c);
+            } else {
+              this.placeRect(this.drawStart.r, this.drawStart.c, this.drawStart.r, this.drawStart.c);
+            }
           } else if (this.preview) {
             this.placeRect(this.preview.r1, this.preview.c1, this.preview.r2, this.preview.c2);
           }
@@ -717,7 +727,9 @@ document.getElementById('zoom-out').addEventListener('click',()=>game.zoomOut())
 document.getElementById('reset-btn').addEventListener('click',()=>game.reset());
 function shareResult(){
   const elapsed=Math.floor((Date.now()-game.startTime)/1000);
-  const text=`四角 Shikaku — ${MONTHS[now.getMonth()]} ${now.getDate()}\n${game.solved?'✓ Solved in '+fmtTime(elapsed):'In progress...'}\nPlay at shikaku.ch`;
+  const text=game.solved
+    ? `I beat the daily Shikaku in ${fmtTime(elapsed)}. Can you do better? 🟨\nshikaku.ch`
+    : `四角 Daily Shikaku — ${MONTHS[now.getMonth()]} ${now.getDate()}\nPlay at shikaku.ch`;
   if(navigator.share)navigator.share({text});else navigator.clipboard.writeText(text).then(()=>alert('Copied!'));
 }
 document.getElementById('share-btn').addEventListener('click',shareResult);
