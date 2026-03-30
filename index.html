@@ -47,10 +47,7 @@ main{padding-top:56px;min-height:100vh}
 /* Canvas fills its container — zoom/pan done via canvas 2D context transform */
 .canvas-wrap{position:relative;width:100%;max-width:580px;border-radius:var(--r);box-shadow:var(--shadow);background:var(--paper2);touch-action:none;cursor:crosshair;display:block}
 .canvas-wrap canvas{display:block;width:100%;height:100%}
-.zoom-controls{display:flex;gap:8px;align-items:center}
-.zoom-btn{font-family:'DM Mono',monospace;font-size:1.1rem;width:34px;height:34px;display:flex;align-items:center;justify-content:center;border:1px solid var(--border);background:var(--paper2);color:var(--ink2);cursor:pointer;border-radius:var(--r);transition:all var(--t);flex-shrink:0;line-height:1}
-.zoom-btn:hover{background:var(--paper3);color:var(--ink);border-color:var(--gold2)}
-.zoom-level{font-size:.68rem;color:var(--ink3);min-width:38px;text-align:center;letter-spacing:.04em}
+
 .game-hint{font-size:.68rem;color:var(--ink3);letter-spacing:.06em;text-align:center;opacity:.7}
 .btn{display:inline-flex;align-items:center;gap:8px;font-family:'DM Mono',monospace;font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;padding:10px 22px;border:1px solid var(--border);background:var(--paper2);color:var(--ink2);cursor:pointer;border-radius:var(--r);transition:all var(--t);text-decoration:none}
 .btn:hover{background:var(--paper3);color:var(--ink);border-color:var(--gold2)}
@@ -125,21 +122,20 @@ main{padding-top:56px;min-height:100vh}
   <div class="game-area">
     <div class="game-meta">
       <span>10 × 10</span>
-      <span class="timer" id="timer">0:00</span>
+      <span class="timer" id="timer">—</span>
     </div>
-    <div class="canvas-wrap" id="canvas-wrap">
+    <div class="canvas-wrap" id="canvas-wrap" style="position:relative">
       <canvas id="game-canvas"></canvas>
+      <div id="start-overlay" style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;background:rgba(var(--paper-rgb,250,249,245),0.88);border-radius:var(--r);backdrop-filter:blur(2px)">
+        <p style="font-size:.78rem;color:var(--ink3);letter-spacing:.06em">Ready when you are</p>
+        <button class="btn btn-primary" id="start-btn" style="font-size:.85rem;padding:14px 36px">▶ Start</button>
+      </div>
     </div>
     <div class="game-controls">
       <button class="btn" id="reset-btn">↺ Reset</button>
-      <div class="zoom-controls">
-        <button class="zoom-btn" id="zoom-out">−</button>
-        <button class="zoom-btn" id="zoom-fit" title="Fit to screen">⊡</button>
-        <button class="zoom-btn" id="zoom-in">+</button>
-      </div>
       <button class="btn" id="share-btn">↗ Share</button>
     </div>
-    <p class="game-hint">Drag to draw · Scroll or pinch to zoom · Click red to erase</p>
+    <p class="game-hint">Drag to draw · Click to place 1 · Right-click or click existing to erase</p>
   </div>
   <div class="countdown">Next puzzle in <span id="countdown">—</span></div>
   <hr class="divider">
@@ -722,9 +718,38 @@ renderStats();
 const puzzle=generatePuzzle(10,10,getDailySeed());
 const canvas=document.getElementById('game-canvas');
 const wrap=document.getElementById('canvas-wrap');
-let timerInterval;
+let timerInterval=null;
+let gameStarted=false;
 const game=new ShikakuGame(puzzle,canvas,wrap);
-timerInterval=setInterval(()=>{document.getElementById('timer').textContent=fmtTime(Math.floor((Date.now()-game.startTime)/1000));},500);
+
+// Disable interaction until Start is pressed
+game.solved = false;
+game._started = false;
+
+// Intercept mousedown/touchstart on canvas to block until started
+const origBindEvents = game._bindEvents.bind(game);
+
+function startGame() {
+  if (gameStarted) return;
+  gameStarted = true;
+  game._started = true;
+  game.startTime = Date.now();
+  document.getElementById('start-overlay').style.display = 'none';
+  timerInterval = setInterval(()=>{
+    document.getElementById('timer').textContent = fmtTime(Math.floor((Date.now()-game.startTime)/1000));
+  }, 500);
+}
+
+document.getElementById('start-btn').addEventListener('click', startGame);
+
+// Block canvas interaction until started
+const origCanvas = document.getElementById('game-canvas');
+['mousedown','touchstart'].forEach(evt => {
+  origCanvas.addEventListener(evt, e => {
+    if (!gameStarted) { e.stopImmediatePropagation(); startGame(); }
+  }, true); // capture phase — fires before game's own listeners
+});
+
 game.onSolve=(elapsed)=>{
   clearInterval(timerInterval);
   document.getElementById('timer').textContent=fmtTime(elapsed);
@@ -740,21 +765,18 @@ game.onSolve=(elapsed)=>{
   document.getElementById('win-time').textContent=fmtTime(elapsed);
   setTimeout(()=>document.getElementById('win-overlay').classList.add('show'),600);
 };
-document.getElementById('zoom-in').addEventListener('click',()=>game.zoomIn());
-document.getElementById('zoom-out').addEventListener('click',()=>game.zoomOut());
-document.getElementById('zoom-fit').addEventListener('click',()=>game.fitToScreen());
-document.getElementById('reset-btn').addEventListener('click',()=>game.reset());
+document.getElementById('reset-btn').addEventListener('click',()=>{
+  game.playerRects=[];game.solved=false;game.mode='idle';game.preview=null;game.render();
+  // Keep timer running, don't reset startTime
+});
 function shareResult(){
   const elapsed=Math.floor((Date.now()-game.startTime)/1000);
   const text=game.solved
-    ? `⏱️ ${fmtTime(elapsed)} (daily)\nbist du schneller? 🧩 shikaku.ch`
+    ? `⏱️ ${fmtTime(elapsed)}\nCan you beat that? 🧩 shikaku.ch`
     : `🧩 shikaku.ch`;
   const waUrl=`https://wa.me/?text=${encodeURIComponent(text)}`;
-  if(navigator.share){
-    navigator.share({text});
-  } else {
-    window.open(waUrl,'_blank');
-  }
+  if(navigator.share) navigator.share({text});
+  else window.open(waUrl,'_blank');
 }
 document.getElementById('share-btn').addEventListener('click',shareResult);
 document.getElementById('win-share').addEventListener('click',shareResult);

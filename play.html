@@ -36,16 +36,11 @@ main{padding-top:56px;min-height:100vh}
 .game-area{display:flex;flex-direction:column;align-items:center;gap:18px}
 .game-meta{display:flex;justify-content:space-between;align-items:center;width:100%;max-width:912px;font-size:.72rem;color:var(--ink3);letter-spacing:.08em}
 .timer{font-variant-numeric:tabular-nums;color:var(--ink2)}
-/* Outer wrapper: fixed viewport size, clips overflow */
+/* Outer wrapper: fixed viewport size */
 .canvas-outer{position:relative;width:100%;max-width:912px;border-radius:var(--r);box-shadow:var(--shadow);background:var(--paper2)}
-/* Inner scroll container: shows scrollbars when content > viewport */
-.canvas-scroll{width:100%;overflow:auto;border-radius:var(--r)}
+.canvas-scroll{width:100%;border-radius:var(--r);overflow:hidden}
 /* The canvas itself */
 .canvas-scroll canvas{display:block;cursor:crosshair;touch-action:none}
-.zoom-controls{display:flex;gap:8px;align-items:center}
-.zoom-btn{font-family:'DM Mono',monospace;font-size:1.1rem;width:34px;height:34px;display:flex;align-items:center;justify-content:center;border:1px solid var(--border);background:var(--paper2);color:var(--ink2);cursor:pointer;border-radius:var(--r);transition:all var(--t);flex-shrink:0;line-height:1}
-.zoom-btn:hover{background:var(--paper3);color:var(--ink);border-color:var(--gold2)}
-.zoom-level{font-size:.68rem;color:var(--ink3);min-width:38px;text-align:center;letter-spacing:.04em}
 .game-hint{font-size:.68rem;color:var(--ink3);letter-spacing:.06em;text-align:center;opacity:.7}
 .btn{display:inline-flex;align-items:center;gap:8px;font-family:'DM Mono',monospace;font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;padding:10px 22px;border:1px solid var(--border);background:var(--paper2);color:var(--ink2);cursor:pointer;border-radius:var(--r);transition:all var(--t);text-decoration:none}
 .btn:hover{background:var(--paper3);color:var(--ink);border-color:var(--gold2)}
@@ -114,14 +109,9 @@ main{padding-top:56px;min-height:100vh}
     </div>
     <div class="game-controls">
       <button class="btn" id="reset-btn">↺ Reset</button>
-      <div class="zoom-controls">
-        <button class="zoom-btn" id="zoom-out">−</button>
-        <button class="zoom-btn" id="zoom-fit" title="Fit to screen">⊡</button>
-        <button class="zoom-btn" id="zoom-in">+</button>
-      </div>
       <button class="btn btn-primary" id="new-btn">→ New</button>
     </div>
-    <p class="game-hint">Drag to draw · Scroll or pinch to zoom · Scrollbars to pan · Click red to erase</p>
+    <p class="game-hint">Drag to draw · Click to place 1 · Right-click or click existing to erase</p>
   </div>
 </div></main>
 
@@ -317,7 +307,8 @@ class ShikakuGame {
   }
 
   reset() {
-    this.playerRects=[];this.solved=false;this.startTime=Date.now();
+    this.playerRects=[];this.solved=false;
+    // Do NOT reset startTime — timer keeps running
     this.mode='idle';this.preview=null;this.render();
   }
 
@@ -386,13 +377,6 @@ class ShikakuGame {
       const cell = this._canvasToCell(pos.x, pos.y);
       if (cell) this.eraseAt(cell.r, cell.c);
     });
-
-    // Scroll wheel → zoom (prevent default scroll on canvas only)
-    c.addEventListener('wheel', e => {
-      e.preventDefault();
-      const pos = this._evPos(e);
-      this._zoomTo(e.deltaY < 0 ? this.zoom * 1.12 : this.zoom / 1.12, pos.x, pos.y);
-    }, {passive: false});
 
     // Touch
     let lastTouches = null;
@@ -587,9 +571,6 @@ document.querySelectorAll('.size-btn').forEach(btn => {
     loadPuzzle(+btn.dataset.rows,+btn.dataset.cols,btn.dataset.name,true);
   });
 });
-document.getElementById('zoom-in').addEventListener('click',()=>game?.zoomIn());
-document.getElementById('zoom-out').addEventListener('click',()=>game?.zoomOut());
-document.getElementById('zoom-fit').addEventListener('click',()=>game?.fitToScreen());
 document.getElementById('reset-btn').addEventListener('click',()=>game?.reset());
 document.getElementById('new-btn').addEventListener('click',()=>{
   const a=document.querySelector('.size-btn.active');
