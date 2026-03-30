@@ -14,7 +14,7 @@
 html{font-size:16px}body{font-family:'DM Mono',monospace;background:var(--paper);color:var(--ink);min-height:100vh;-webkit-font-smoothing:antialiased}
 nav{position:fixed;top:0;left:0;right:0;z-index:100;background:var(--paper);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 24px;height:56px}
 .nav-logo{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--ink)}
-.nav-logo-icon{width:28px;height:28px;flex-shrink:0}
+.nav-logo-icon{width:34px;height:34px;flex-shrink:0}
 .nav-logo-text{font-family:'Noto Serif JP',serif;font-weight:300;font-size:1.1rem;letter-spacing:.12em}
 .nav-logo span{color:var(--gold)}.nav-links{display:flex;gap:28px;list-style:none}
 .nav-links a{font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;color:var(--ink2);text-decoration:none;transition:color var(--t)}
@@ -71,12 +71,19 @@ main{padding-top:56px;min-height:100vh}.page{max-width:720px;margin:0 auto;paddi
 <body>
 <nav>
   <a href="index.html" class="nav-logo">
-    <svg class="nav-logo-icon" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <rect x="1" y="1" width="28" height="9" rx="2.5" fill="currentColor"/>
-      <rect x="1" y="12" width="8" height="17" rx="2.5" fill="currentColor"/>
-      <rect x="11" y="12" width="18" height="8" rx="2.5" fill="currentColor"/>
-      <rect x="11" y="22" width="8" height="7" rx="2.5" fill="currentColor"/>
-      <rect x="21" y="22" width="8" height="7" rx="2.5" fill="currentColor"/>
+    <svg class="nav-logo-icon" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg">
+      <!-- Black background -->
+      <rect width="60" height="60" rx="6" fill="currentColor"/>
+      <!-- Row 1: wide rect spanning all 3 cols (area=3) -->
+      <rect x="3" y="3" width="54" height="17" rx="3" fill="white"/>
+      <!-- Row 2-3 left: tall rect spanning 2 rows (area=2) -->
+      <rect x="3" y="22" width="17" height="35" rx="3" fill="white"/>
+      <!-- Row 2 right 2 cols: wide rect (area=2) -->
+      <rect x="22" y="22" width="35" height="17" rx="3" fill="white"/>
+      <!-- Row 3 middle: small square (area=1) -->
+      <rect x="22" y="41" width="17" height="16" rx="3" fill="white"/>
+      <!-- Row 3 right: small square (area=1) -->
+      <rect x="41" y="41" width="16" height="16" rx="3" fill="white"/>
     </svg>
     <span class="nav-logo-text"><span>shikaku</span></span>
   </a>
