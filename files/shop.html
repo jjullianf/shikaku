@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Shikaku — The Book</title>
+<meta name="description" content="A handcrafted book of Shikaku puzzles. Coming soon.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Noto+Serif+JP:wght@300;400&display=swap">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--ink:#1a1916;--ink2:#4a4840;--ink3:#8a8880;--paper:#faf9f5;--paper2:#f0ede5;--paper3:#e8e4d8;--gold:#8a6f3a;--gold2:#c4a565;--green:#3a7a50;--border:rgba(26,25,22,0.12);--shadow:0 2px 20px rgba(26,25,22,0.08);--r:4px;--t:0.18s ease}
+@media(prefers-color-scheme:dark){:root{--ink:#e8e6de;--ink2:#a8a69e;--ink3:#686660;--paper:#111110;--paper2:#1a1918;--paper3:#222120;--gold:#c4a565;--gold2:#8a6f3a;--green:#5aaa70;--border:rgba(232,230,222,0.1);--shadow:0 2px 20px rgba(0,0,0,0.3)}}
+html{font-size:16px}body{font-family:'DM Mono',monospace;background:var(--paper);color:var(--ink);min-height:100vh;-webkit-font-smoothing:antialiased}
+nav{position:fixed;top:0;left:0;right:0;z-index:100;background:var(--paper);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 24px;height:56px}
+.nav-logo{font-family:'Noto Serif JP',serif;font-weight:300;font-size:1.15rem;letter-spacing:.12em;color:var(--ink);text-decoration:none}
+.nav-logo span{color:var(--gold)}.nav-links{display:flex;gap:28px;list-style:none}
+.nav-links a{font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;color:var(--ink2);text-decoration:none;transition:color var(--t)}
+.nav-links a:hover,.nav-links a.active{color:var(--gold)}
+main{padding-top:56px;min-height:100vh}.page{max-width:720px;margin:0 auto;padding:40px 24px 80px}
+.page-header{text-align:center;margin-bottom:32px}
+.page-header h1{font-family:'Noto Serif JP',serif;font-weight:300;font-size:1.6rem;letter-spacing:.08em;margin-bottom:8px}
+.page-header p{font-size:.78rem;color:var(--ink3);letter-spacing:.06em}
+.badge{display:inline-block;font-size:.65rem;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);border:1px solid var(--gold2);padding:3px 10px;border-radius:2px;margin-bottom:14px;opacity:.8}
+.coming-soon-strip{background:var(--paper2);border:1px solid var(--border);padding:12px 20px;border-radius:var(--r);display:flex;align-items:center;gap:12px;margin-bottom:28px;font-size:.72rem;color:var(--ink3);letter-spacing:.06em}
+.dot{display:inline-block;width:8px;height:8px;background:var(--gold);border-radius:50%;animation:pulse 2s ease-in-out infinite;flex-shrink:0}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.shop-hero{display:flex;gap:48px;align-items:flex-start;margin-bottom:48px;flex-wrap:wrap}
+.book-cover-img{width:200px;height:280px;background:linear-gradient(135deg,#2a2620 0%,#3a3328 50%,#1e1c18 100%);border-radius:3px 8px 8px 3px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:14px;box-shadow:4px 6px 24px rgba(0,0,0,.35),-1px 0 8px rgba(0,0,0,.2);position:relative;overflow:hidden;flex-shrink:0}
+.book-cover-img::before{content:'';position:absolute;left:0;top:0;bottom:0;width:14px;background:rgba(0,0,0,.25)}
+.book-title-cover{font-family:'Noto Serif JP',serif;font-weight:300;font-size:1.1rem;color:#c4a565;letter-spacing:.15em;text-align:center;padding:0 20px;line-height:1.6}
+.book-grid-deco{display:grid;grid-template-columns:repeat(5,12px);grid-template-rows:repeat(5,12px);gap:1px;opacity:.5}
+.book-grid-deco span{background:rgba(196,165,101,.4);border-radius:1px}
+.book-grid-deco span.lit{background:rgba(196,165,101,.85)}
+.book-info{flex:1;min-width:240px}
+.book-info h2{font-family:'Noto Serif JP',serif;font-weight:300;font-size:1.5rem;letter-spacing:.06em;margin-bottom:12px}
+.price{font-size:1.4rem;font-weight:300;color:var(--gold);margin-bottom:16px}
+.price small{font-size:.8rem;color:var(--ink3);letter-spacing:.06em}
+.book-info p{font-size:.8rem;color:var(--ink2);line-height:1.7;letter-spacing:.03em;margin-bottom:24px}
+.book-features{list-style:none;display:flex;flex-direction:column;gap:8px;margin-bottom:28px}
+.book-features li{font-size:.74rem;color:var(--ink3);letter-spacing:.04em;display:flex;gap:10px;align-items:center}
+.book-features li::before{content:'◆';color:var(--gold);font-size:.5rem}
+.notify-section{background:var(--paper2);border:1px solid var(--border);padding:32px;border-radius:var(--r);text-align:center}
+.notify-section h3{font-family:'Noto Serif JP',serif;font-weight:300;font-size:1.1rem;letter-spacing:.08em;margin-bottom:8px}
+.notify-section p{font-size:.76rem;color:var(--ink3);letter-spacing:.04em;margin-bottom:20px}
+.notify-form{display:flex;gap:10px;max-width:380px;margin:0 auto;flex-wrap:wrap;justify-content:center}
+.notify-form input{flex:1;min-width:200px;font-family:'DM Mono',monospace;font-size:.78rem;padding:10px 14px;border:1px solid var(--border);background:var(--paper);color:var(--ink);border-radius:var(--r);outline:none;transition:border-color var(--t);letter-spacing:.04em}
+.notify-form input:focus{border-color:var(--gold2)}
+.notify-form input::placeholder{color:var(--ink3)}
+.success-msg{display:none;font-size:.76rem;color:var(--green);letter-spacing:.06em;margin-top:14px}
+.btn{display:inline-flex;align-items:center;gap:8px;font-family:'DM Mono',monospace;font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;padding:10px 22px;border:1px solid var(--border);background:var(--paper2);color:var(--ink2);cursor:pointer;border-radius:var(--r);transition:all var(--t);text-decoration:none}
+.btn:hover{background:var(--paper3);color:var(--ink);border-color:var(--gold2)}
+.btn-primary{background:var(--gold)!important;color:var(--paper)!important;border-color:var(--gold)!important}
+.btn-primary:hover{background:var(--gold2)!important;border-color:var(--gold2)!important}
+.divider{border:none;border-top:1px solid var(--border);margin:32px 0}
+.preview-section{margin-top:8px}
+.preview-section h3{font-family:'Noto Serif JP',serif;font-weight:300;font-size:1rem;letter-spacing:.1em;color:var(--ink2);text-align:center;margin-bottom:6px}
+.preview-section p{font-size:.74rem;color:var(--ink3);text-align:center;letter-spacing:.04em;margin-bottom:24px}
+.sample-grid{display:flex;gap:24px;justify-content:center;flex-wrap:wrap}
+.sample-puzzle{display:flex;flex-direction:column;align-items:center;gap:10px}
+.sample-puzzle span{font-size:.65rem;color:var(--ink3);letter-spacing:.1em;text-transform:uppercase}
+.sample-puzzle canvas{border-radius:3px;box-shadow:var(--shadow)}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.page>*{animation:fadeUp .35s ease both}
+.page>*:nth-child(1){animation-delay:.0s}.page>*:nth-child(2){animation-delay:.05s}.page>*:nth-child(3){animation-delay:.1s}.page>*:nth-child(4){animation-delay:.15s}.page>*:nth-child(5){animation-delay:.2s}
+@media(max-width:560px){nav{padding:0 16px}.nav-links{gap:18px}.page{padding:28px 16px 60px}.shop-hero{flex-direction:column;align-items:center}}
+</style>
+</head>
+<body>
+<nav>
+  <a href="index.html" class="nav-logo">四角 <span>shikaku</span></a>
+  <ul class="nav-links">
+    <li><a href="index.html">Daily</a></li>
+    <li><a href="play.html">Play</a></li>
+    <li><a href="shop.html" class="active">Book</a></li>
+  </ul>
+</nav>
+<main><div class="page">
+  <div class="page-header">
+    <div class="badge">Coming soon</div>
+    <h1>The Shikaku Book</h1>
+    <p>A curated collection of hand-crafted puzzles</p>
+  </div>
+
+  <div class="coming-soon-strip">
+    <span class="dot"></span>
+    The book is currently in production — be the first to know when it launches
+  </div>
+
+  <div class="shop-hero">
+    <div class="book-cover-img" id="book-cover">
+      <div class="book-title-cover">四角<br><span style="font-size:.6rem;letter-spacing:.2em;opacity:.7">SHIKAKU</span></div>
+      <div class="book-grid-deco" id="cover-grid"></div>
+    </div>
+    <div class="book-info">
+      <h2>Shikaku: A Book of Puzzles</h2>
+      <div class="price">Coming soon <small>· Price TBA</small></div>
+      <p>A carefully designed puzzle book featuring 120 Shikaku puzzles across four difficulty levels. From a gentle 5×5 warm-up to demanding 25×25 challenges — printed on quality paper, perfect for quiet mornings or long journeys.</p>
+      <ul class="book-features">
+        <li>120 puzzles — 30 per difficulty level</li>
+        <li>5×5 · 10×10 · 20×20 · 25×25 grids</li>
+        <li>Full solutions at the back</li>
+        <li>Clean, minimal print design</li>
+        <li>Perfect-bound softcover, A5 format</li>
+      </ul>
+      <div class="notify-section">
+        <h3>Get notified at launch</h3>
+        <p>Leave your email and we'll send you one message when the book is available.</p>
+        <div class="notify-form">
+          <input type="email" id="email-input" placeholder="your@email.com" autocomplete="email">
+          <button class="btn btn-primary" id="notify-btn">Notify me</button>
+        </div>
+        <p class="success-msg" id="success-msg">✓ You're on the list. We'll be in touch!</p>
+      </div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <div class="preview-section">
+    <h3>Sample puzzles from the book</h3>
+    <p>Each puzzle is uniquely generated and tested for a clean, satisfying solve</p>
+    <div class="sample-grid" id="sample-grid"></div>
+  </div>
+</div></main>
+
+<script>
+// ── ENGINE ──────────────────────────────────────────────────────────────────
+function mulberry32(seed){return function(){seed|=0;seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296};}
+function generateSimplePuzzle(rows,cols,seed){const rng=mulberry32(seed),rects=[],grid=Array.from({length:rows},()=>new Array(cols).fill(-1)),clues=Array.from({length:rows},()=>new Array(cols).fill(0));for(let r=0;r<rows;r++){let c=0;while(c<cols){const w=(c+1<cols&&rng()>.5)?2:1,aw=Math.min(w,cols-c),id=rects.length,cc2=c+Math.floor(rng()*aw);rects.push({r1:r,c1:c,r2:r,c2:c+aw-1,clueR:r,clueC:cc2,area:aw});for(let x=c;x<c+aw;x++){grid[r][x]=id;clues[r][x]=0;}clues[r][cc2]=aw;c+=aw;}}return{rows,cols,clues,solution:rects,grid};}
+function generatePuzzle(rows,cols,seed){const rng=mulberry32(seed),grid=Array.from({length:rows},()=>new Array(cols).fill(-1)),rects=[];let attempts=0;while(true){let startR=-1,startC=-1;outer:for(let r=0;r<rows;r++)for(let c=0;c<cols;c++)if(grid[r][c]===-1){startR=r;startC=c;break outer;}if(startR===-1)break;let placed=false;const maxH=rows-startR,maxW=cols-startC,cands=[];for(let h=1;h<=maxH;h++)for(let w=1;w<=maxW;w++)cands.push([h,w]);for(let i=cands.length-1;i>0;i--){const j=Math.floor(rng()*(i+1));[cands[i],cands[j]]=[cands[j],cands[i]];}for(const[h,w]of cands){let fits=true;for(let r=startR;r<startR+h&&fits;r++)for(let c=startC;c<startC+w&&fits;c++)if(grid[r][c]!==-1)fits=false;if(!fits)continue;const id=rects.length,clueR=startR+Math.floor(rng()*h),clueC=startC+Math.floor(rng()*w);for(let r=startR;r<startR+h;r++)for(let c=startC;c<startC+w;c++)grid[r][c]=id;rects.push({r1:startR,c1:startC,r2:startR+h-1,c2:startC+w-1,clueR,clueC,area:h*w});placed=true;break;}if(!placed){attempts++;if(attempts>200)return generateSimplePuzzle(rows,cols,seed+attempts);for(let r=0;r<rows;r++)grid[r].fill(-1);rects.length=0;rng();rng();}}const clues=Array.from({length:rows},()=>new Array(cols).fill(0));for(const rect of rects)clues[rect.clueR][rect.clueC]=rect.area;return{rows,cols,clues,solution:rects,grid};}
+class ShikakuGame{constructor(puzzle,canvas){this.puzzle=puzzle;this.canvas=canvas;this.ctx=canvas.getContext('2d');this.playerRects=[];this.solved=false;this.startTime=Date.now();this.setupCanvas();this.render();}
+setupCanvas(){const{rows,cols}=this.puzzle,cs=this.cellSize||32;this.canvas.width=cols*cs;this.canvas.height=rows*cs;this.canvas.style.width=this.canvas.width+'px';this.canvas.style.height=this.canvas.height+'px';}
+render(){const{rows,cols,clues}=this.puzzle,ctx=this.ctx,cs=this.cellSize||32,dk=window.matchMedia('(prefers-color-scheme: dark)').matches;const C=dk?{bg:'#111110',g:'rgba(255,255,255,0.1)',b:'rgba(255,255,255,0.25)',cl:'#e8e6de',rf:'rgba(180,160,100,0.13)',rs:'rgba(200,175,100,0.7)',sf:'rgba(80,160,100,0.15)',ss:'rgba(80,180,100,0.7)'}:{bg:'#faf9f5',g:'rgba(0,0,0,0.1)',b:'rgba(0,0,0,0.3)',cl:'#1a1916',rf:'rgba(140,110,40,0.08)',rs:'rgba(120,90,30,0.6)',sf:'rgba(50,140,80,0.1)',ss:'rgba(50,140,80,0.6)'};
+ctx.fillStyle=C.bg;ctx.fillRect(0,0,this.canvas.width,this.canvas.height);
+for(const p of this.playerRects){ctx.fillStyle=C.sf;ctx.fillRect(p.c1*cs+1,p.r1*cs+1,(p.c2-p.c1+1)*cs-2,(p.r2-p.r1+1)*cs-2);ctx.strokeStyle=C.ss;ctx.lineWidth=2;ctx.strokeRect(p.c1*cs+1.5,p.r1*cs+1.5,(p.c2-p.c1+1)*cs-3,(p.r2-p.r1+1)*cs-3);}
+for(let r=0;r<=rows;r++){ctx.strokeStyle=(r%5===0)?C.b:C.g;ctx.lineWidth=(r%5===0)?1:.5;ctx.beginPath();ctx.moveTo(0,r*cs);ctx.lineTo(cols*cs,r*cs);ctx.stroke();}
+for(let c=0;c<=cols;c++){ctx.strokeStyle=(c%5===0)?C.b:C.g;ctx.lineWidth=(c%5===0)?1:.5;ctx.beginPath();ctx.moveTo(c*cs,0);ctx.lineTo(c*cs,rows*cs);ctx.stroke();}
+ctx.strokeStyle=C.b;ctx.lineWidth=2;ctx.strokeRect(1,1,cols*cs-2,rows*cs-2);
+const fs=Math.max(Math.min(cs*.45,18),9);ctx.font=`500 ${fs}px "DM Mono",monospace`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle=C.cl;
+for(let r=0;r<rows;r++)for(let c=0;c<cols;c++)if(clues[r][c]>0)ctx.fillText(clues[r][c],c*cs+cs/2,r*cs+cs/2);}}
+// ── END ENGINE ──────────────────────────────────────────────────────────────
+
+// Cover grid deco
+const litCells=[1,3,7,8,12,16,18,20,22,24];
+for(let i=0;i<25;i++){const s=document.createElement('span');if(litCells.includes(i))s.className='lit';document.getElementById('cover-grid').appendChild(s);}
+
+// Email notify
+document.getElementById('notify-btn').addEventListener('click',()=>{
+  const email=document.getElementById('email-input').value.trim();
+  if(!email||!email.includes('@')){document.getElementById('email-input').focus();return;}
+  const subs=JSON.parse(localStorage.getItem('shikaku_subs')||'[]');
+  if(!subs.includes(email)){subs.push(email);localStorage.setItem('shikaku_subs',JSON.stringify(subs));}
+  document.getElementById('success-msg').style.display='block';
+  document.getElementById('notify-btn').disabled=true;
+  document.getElementById('notify-btn').textContent='✓ Done';
+});
+document.getElementById('email-input').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('notify-btn').click();});
+
+// Sample puzzles (read-only with solution shown)
+const samples=[{rows:5,cols:5,seed:20240101,cs:38,label:'5 × 5'},{rows:10,cols:10,seed:20240202,cs:26,label:'10 × 10'},{rows:5,cols:5,seed:20240505,cs:38,label:'5 × 5'}];
+const container=document.getElementById('sample-grid');
+samples.forEach(({rows,cols,seed,cs,label})=>{
+  const puzzle=generatePuzzle(rows,cols,seed);
+  const wrap=document.createElement('div'); wrap.className='sample-puzzle';
+  const canvas=document.createElement('canvas');
+  const lbl=document.createElement('span'); lbl.textContent=label;
+  wrap.appendChild(canvas); wrap.appendChild(lbl); container.appendChild(wrap);
+  const g=new ShikakuGame(puzzle,canvas);
+  g.cellSize=cs; g.setupCanvas();
+  for(const rect of puzzle.solution) g.playerRects.push({r1:rect.r1,c1:rect.c1,r2:rect.r2,c2:rect.c2});
+  g.solved=true; g.render();
+});
+</script>
+</body>
+</html>

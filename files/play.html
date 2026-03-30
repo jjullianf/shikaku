@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Shikaku — Play</title>
+<meta name="description" content="Play unlimited Shikaku puzzles in 5×5, 10×10, 20×20, and 25×25.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Noto+Serif+JP:wght@300;400&display=swap">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--ink:#1a1916;--ink2:#4a4840;--ink3:#8a8880;--paper:#faf9f5;--paper2:#f0ede5;--paper3:#e8e4d8;--gold:#8a6f3a;--gold2:#c4a565;--border:rgba(26,25,22,0.12);--shadow:0 2px 20px rgba(26,25,22,0.08);--r:4px;--t:0.18s ease}
+@media(prefers-color-scheme:dark){:root{--ink:#e8e6de;--ink2:#a8a69e;--ink3:#686660;--paper:#111110;--paper2:#1a1918;--paper3:#222120;--gold:#c4a565;--gold2:#8a6f3a;--border:rgba(232,230,222,0.1);--shadow:0 2px 20px rgba(0,0,0,0.3)}}
+html{font-size:16px}body{font-family:'DM Mono',monospace;background:var(--paper);color:var(--ink);min-height:100vh;-webkit-font-smoothing:antialiased}
+nav{position:fixed;top:0;left:0;right:0;z-index:100;background:var(--paper);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 24px;height:56px}
+.nav-logo{font-family:'Noto Serif JP',serif;font-weight:300;font-size:1.15rem;letter-spacing:.12em;color:var(--ink);text-decoration:none}
+.nav-logo span{color:var(--gold)}.nav-links{display:flex;gap:28px;list-style:none}
+.nav-links a{font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;color:var(--ink2);text-decoration:none;transition:color var(--t)}
+.nav-links a:hover,.nav-links a.active{color:var(--gold)}
+main{padding-top:56px;min-height:100vh}.page{max-width:720px;margin:0 auto;padding:40px 24px 80px}
+.page-header{text-align:center;margin-bottom:32px}
+.page-header h1{font-family:'Noto Serif JP',serif;font-weight:300;font-size:1.6rem;letter-spacing:.08em;margin-bottom:8px}
+.page-header p{font-size:.78rem;color:var(--ink3);letter-spacing:.06em}
+.badge{display:inline-block;font-size:.65rem;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);border:1px solid var(--gold2);padding:3px 10px;border-radius:2px;margin-bottom:14px;opacity:.8}
+.difficulty-label{font-size:.65rem;letter-spacing:.12em;text-transform:uppercase;color:var(--ink3);text-align:center;display:block;margin-bottom:10px}
+.size-selector{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-bottom:32px}
+.size-option{display:flex;flex-direction:column;align-items:center;gap:5px}
+.size-option small{font-size:.62rem;color:var(--ink3);letter-spacing:.08em}
+.size-btn{font-family:'DM Mono',monospace;font-size:.75rem;letter-spacing:.1em;padding:12px 20px;border:1px solid var(--border);background:var(--paper2);color:var(--ink2);cursor:pointer;border-radius:var(--r);transition:all var(--t)}
+.size-btn:hover{background:var(--paper3);color:var(--ink);border-color:var(--gold2)}
+.size-btn.active{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.game-area{display:flex;flex-direction:column;align-items:center;gap:18px}
+.game-meta{display:flex;justify-content:space-between;align-items:center;width:100%;max-width:560px;font-size:.72rem;color:var(--ink3);letter-spacing:.08em}
+.timer{font-variant-numeric:tabular-nums;color:var(--ink2)}
+#game-canvas{cursor:crosshair;border-radius:var(--r);box-shadow:var(--shadow);max-width:100%;display:block}
+.game-hint{font-size:.68rem;color:var(--ink3);letter-spacing:.06em;text-align:center;opacity:.7}
+.btn{display:inline-flex;align-items:center;gap:8px;font-family:'DM Mono',monospace;font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;padding:10px 22px;border:1px solid var(--border);background:var(--paper2);color:var(--ink2);cursor:pointer;border-radius:var(--r);transition:all var(--t);text-decoration:none}
+.btn:hover{background:var(--paper3);color:var(--ink);border-color:var(--gold2)}
+.btn-primary{background:var(--gold)!important;color:var(--paper)!important;border-color:var(--gold)!important}
+.btn-primary:hover{background:var(--gold2)!important;border-color:var(--gold2)!important}
+.game-controls{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
+.win-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;z-index:200;opacity:0;pointer-events:none;transition:opacity .4s ease}
+.win-overlay.show{opacity:1;pointer-events:all}
+.win-card{background:var(--paper);border:1px solid var(--border);padding:48px 56px;text-align:center;border-radius:var(--r);box-shadow:0 8px 60px rgba(0,0,0,.2);max-width:360px;width:90%;transform:translateY(16px);transition:transform .4s ease}
+.win-overlay.show .win-card{transform:translateY(0)}
+.kigo{font-size:2.5rem;margin-bottom:16px;display:block}
+.win-card h2{font-family:'Noto Serif JP',serif;font-weight:300;font-size:1.4rem;letter-spacing:.1em;margin-bottom:8px}
+.win-card p{font-size:.78rem;color:var(--ink3);letter-spacing:.06em;margin-bottom:28px}
+.time-display{font-size:2rem;font-weight:300;color:var(--gold);margin-bottom:28px;display:block}
+.win-card-btns{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+#diff-badge{font-size:.65rem;letter-spacing:.12em;text-transform:uppercase;color:var(--gold)}
+.puzzle-counter{font-size:.68rem;color:var(--ink3);letter-spacing:.08em}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.page>*{animation:fadeUp .35s ease both}
+.page>*:nth-child(1){animation-delay:.0s}.page>*:nth-child(2){animation-delay:.05s}.page>*:nth-child(3){animation-delay:.1s}.page>*:nth-child(4){animation-delay:.15s}
+@media(max-width:560px){nav{padding:0 16px}.nav-links{gap:18px}.page{padding:28px 16px 60px}.win-card{padding:36px 28px}}
+</style>
+</head>
+<body>
+<nav>
+  <a href="index.html" class="nav-logo">四角 <span>shikaku</span></a>
+  <ul class="nav-links">
+    <li><a href="index.html">Daily</a></li>
+    <li><a href="play.html" class="active">Play</a></li>
+    <li><a href="shop.html">Book</a></li>
+  </ul>
+</nav>
+<main><div class="page">
+  <div class="page-header">
+    <div class="badge">Unlimited puzzles</div>
+    <h1>Play Shikaku</h1>
+    <p>Choose a grid size and generate endless puzzles</p>
+  </div>
+  <span class="difficulty-label">Select grid size</span>
+  <div class="size-selector">
+    <div class="size-option"><button class="size-btn" data-rows="5" data-cols="5" data-name="Starter">5 × 5</button><small>Starter</small></div>
+    <div class="size-option"><button class="size-btn active" data-rows="10" data-cols="10" data-name="Classic">10 × 10</button><small>Classic</small></div>
+    <div class="size-option"><button class="size-btn" data-rows="20" data-cols="20" data-name="Hard">20 × 20</button><small>Hard</small></div>
+    <div class="size-option"><button class="size-btn" data-rows="25" data-cols="25" data-name="Expert">25 × 25</button><small>Expert</small></div>
+  </div>
+  <div class="game-area">
+    <div class="game-meta">
+      <span id="diff-badge">Classic</span>
+      <span class="puzzle-counter" id="puzzle-counter">Puzzle #1</span>
+      <span class="timer" id="timer">0:00</span>
+    </div>
+    <canvas id="game-canvas"></canvas>
+    <p class="game-hint">Drag to draw rectangles · Right-click or long-press to erase</p>
+    <div class="game-controls">
+      <button class="btn" id="reset-btn">↺ Reset</button>
+      <button class="btn btn-primary" id="new-btn">→ New puzzle</button>
+    </div>
+  </div>
+</div></main>
+
+<div class="win-overlay" id="win-overlay">
+  <div class="win-card">
+    <span class="kigo">◈</span>
+    <h2>Well done</h2>
+    <p id="win-desc">Puzzle solved</p>
+    <span class="time-display" id="win-time">—</span>
+    <div class="win-card-btns">
+      <button class="btn btn-primary" id="win-next">→ Next puzzle</button>
+      <button class="btn" id="win-close">✕ Close</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── ENGINE ──────────────────────────────────────────────────────────────────
+function mulberry32(seed){return function(){seed|=0;seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296};}
+function generateSimplePuzzle(rows,cols,seed){const rng=mulberry32(seed),rects=[],grid=Array.from({length:rows},()=>new Array(cols).fill(-1)),clues=Array.from({length:rows},()=>new Array(cols).fill(0));for(let r=0;r<rows;r++){let c=0;while(c<cols){const w=(c+1<cols&&rng()>.5)?2:1,aw=Math.min(w,cols-c),id=rects.length,cc2=c+Math.floor(rng()*aw);rects.push({r1:r,c1:c,r2:r,c2:c+aw-1,clueR:r,clueC:cc2,area:aw});for(let x=c;x<c+aw;x++){grid[r][x]=id;clues[r][x]=0;}clues[r][cc2]=aw;c+=aw;}}return{rows,cols,clues,solution:rects,grid};}
+function generatePuzzle(rows,cols,seed){const rng=mulberry32(seed),grid=Array.from({length:rows},()=>new Array(cols).fill(-1)),rects=[];let attempts=0;while(true){let startR=-1,startC=-1;outer:for(let r=0;r<rows;r++)for(let c=0;c<cols;c++)if(grid[r][c]===-1){startR=r;startC=c;break outer;}if(startR===-1)break;let placed=false;const maxH=rows-startR,maxW=cols-startC,cands=[];for(let h=1;h<=maxH;h++)for(let w=1;w<=maxW;w++)cands.push([h,w]);for(let i=cands.length-1;i>0;i--){const j=Math.floor(rng()*(i+1));[cands[i],cands[j]]=[cands[j],cands[i]];}for(const[h,w]of cands){let fits=true;for(let r=startR;r<startR+h&&fits;r++)for(let c=startC;c<startC+w&&fits;c++)if(grid[r][c]!==-1)fits=false;if(!fits)continue;const id=rects.length,clueR=startR+Math.floor(rng()*h),clueC=startC+Math.floor(rng()*w);for(let r=startR;r<startR+h;r++)for(let c=startC;c<startC+w;c++)grid[r][c]=id;rects.push({r1:startR,c1:startC,r2:startR+h-1,c2:startC+w-1,clueR,clueC,area:h*w});placed=true;break;}if(!placed){attempts++;if(attempts>200)return generateSimplePuzzle(rows,cols,seed+attempts);for(let r=0;r<rows;r++)grid[r].fill(-1);rects.length=0;rng();rng();}}const clues=Array.from({length:rows},()=>new Array(cols).fill(0));for(const rect of rects)clues[rect.clueR][rect.clueC]=rect.area;return{rows,cols,clues,solution:rects,grid};}
+class ShikakuGame{constructor(puzzle,canvas){this.puzzle=puzzle;this.canvas=canvas;this.ctx=canvas.getContext('2d');this.playerRects=[];this.drawing=false;this.startCell=null;this.currentCell=null;this.solved=false;this.startTime=Date.now();this.onSolve=null;this.setupCanvas();this.bindEvents();this.render();}
+setupCanvas(){const{rows,cols}=this.puzzle;const ms=Math.min(window.innerWidth-48,window.innerHeight-240,560);this.cellSize=Math.max(Math.floor(ms/Math.max(rows,cols)),14);this.canvas.width=cols*this.cellSize;this.canvas.height=rows*this.cellSize;this.canvas.style.width=this.canvas.width+'px';this.canvas.style.height=this.canvas.height+'px';}
+cellAt(x,y){const c=Math.floor(x/this.cellSize),r=Math.floor(y/this.cellSize);if(r<0||r>=this.puzzle.rows||c<0||c>=this.puzzle.cols)return null;return{r,c};}
+getPos(e){const rect=this.canvas.getBoundingClientRect(),touch=e.touches?e.touches[0]:e;return{x:(touch.clientX-rect.left)*(this.canvas.width/rect.width),y:(touch.clientY-rect.top)*(this.canvas.height/rect.height)};}
+bindEvents(){const s=(e)=>{e.preventDefault();if(this.solved)return;const pos=this.getPos(e),cell=this.cellAt(pos.x,pos.y);if(!cell)return;this.drawing=true;this.startCell=cell;this.currentCell=cell;this.render();};const mv=(e)=>{e.preventDefault();if(!this.drawing)return;const pos=this.getPos(e),cell=this.cellAt(pos.x,pos.y);if(cell){this.currentCell=cell;this.render();}};const en=(e)=>{e.preventDefault();if(!this.drawing)return;this.drawing=false;if(this.startCell&&this.currentCell){const r1=Math.min(this.startCell.r,this.currentCell.r),c1=Math.min(this.startCell.c,this.currentCell.c),r2=Math.max(this.startCell.r,this.currentCell.r),c2=Math.max(this.startCell.c,this.currentCell.c);this.placeRect(r1,c1,r2,c2);}this.startCell=null;this.currentCell=null;};this.canvas.addEventListener('mousedown',s);this.canvas.addEventListener('mousemove',mv);this.canvas.addEventListener('mouseup',en);this.canvas.addEventListener('touchstart',s,{passive:false});this.canvas.addEventListener('touchmove',mv,{passive:false});this.canvas.addEventListener('touchend',en,{passive:false});this.canvas.addEventListener('contextmenu',(e)=>{e.preventDefault();const pos=this.getPos(e),cell=this.cellAt(pos.x,pos.y);if(cell)this.eraseAt(cell.r,cell.c);});}
+placeRect(r1,c1,r2,c2){this.playerRects=this.playerRects.filter(p=>!(p.r1<=r2&&p.r2>=r1&&p.c1<=c2&&p.c2>=c1));this.playerRects.push({r1,c1,r2,c2});this.render();this.checkSolution();}
+eraseAt(r,c){this.playerRects=this.playerRects.filter(p=>!(p.r1<=r&&p.r2>=r&&p.c1<=c&&p.c2>=c));this.render();}
+checkSolution(){const{rows,cols,clues}=this.puzzle;const cov=Array.from({length:rows},()=>new Array(cols).fill(0));for(const p of this.playerRects)for(let r=p.r1;r<=p.r2;r++)for(let c=p.c1;c<=p.c2;c++)cov[r][c]++;for(let r=0;r<rows;r++)for(let c=0;c<cols;c++)if(cov[r][c]!==1)return;for(const p of this.playerRects){const area=(p.r2-p.r1+1)*(p.c2-p.c1+1);let cnt=0,val=0;for(let r=p.r1;r<=p.r2;r++)for(let c=p.c1;c<=p.c2;c++)if(clues[r][c]>0){cnt++;val=clues[r][c];}if(cnt!==1||val!==area)return;}this.solved=true;this.render();if(this.onSolve)this.onSolve(Math.floor((Date.now()-this.startTime)/1000));}
+render(){const{rows,cols,clues}=this.puzzle,ctx=this.ctx,cs=this.cellSize,dk=window.matchMedia('(prefers-color-scheme: dark)').matches;const C=dk?{bg:'#111110',g:'rgba(255,255,255,0.1)',b:'rgba(255,255,255,0.25)',cl:'#e8e6de',rf:'rgba(180,160,100,0.13)',rs:'rgba(200,175,100,0.7)',ef:'rgba(200,80,80,0.1)',es:'rgba(200,80,80,0.5)',pf:'rgba(150,140,100,0.25)',ps:'rgba(200,180,100,0.5)',sf:'rgba(80,160,100,0.15)',ss:'rgba(80,180,100,0.7)'}:{bg:'#faf9f5',g:'rgba(0,0,0,0.1)',b:'rgba(0,0,0,0.3)',cl:'#1a1916',rf:'rgba(140,110,40,0.08)',rs:'rgba(120,90,30,0.6)',ef:'rgba(200,60,60,0.07)',es:'rgba(200,60,60,0.5)',pf:'rgba(100,85,40,0.15)',ps:'rgba(120,90,30,0.4)',sf:'rgba(50,140,80,0.1)',ss:'rgba(50,140,80,0.6)'};
+ctx.clearRect(0,0,this.canvas.width,this.canvas.height);ctx.fillStyle=C.bg;ctx.fillRect(0,0,this.canvas.width,this.canvas.height);
+for(const p of this.playerRects){const area=(p.r2-p.r1+1)*(p.c2-p.c1+1);let cnt=0,val=0;for(let r=p.r1;r<=p.r2;r++)for(let c=p.c1;c<=p.c2;c++)if(clues[r][c]>0){cnt++;val=clues[r][c];}const ok=cnt===1&&val===area;ctx.fillStyle=this.solved?C.sf:(ok?C.rf:C.ef);ctx.fillRect(p.c1*cs+1,p.r1*cs+1,(p.c2-p.c1+1)*cs-2,(p.r2-p.r1+1)*cs-2);ctx.strokeStyle=this.solved?C.ss:(ok?C.rs:C.es);ctx.lineWidth=2;ctx.strokeRect(p.c1*cs+1.5,p.r1*cs+1.5,(p.c2-p.c1+1)*cs-3,(p.r2-p.r1+1)*cs-3);}
+if(this.drawing&&this.startCell&&this.currentCell){const r1=Math.min(this.startCell.r,this.currentCell.r),c1=Math.min(this.startCell.c,this.currentCell.c),r2=Math.max(this.startCell.r,this.currentCell.r),c2=Math.max(this.startCell.c,this.currentCell.c);ctx.fillStyle=C.pf;ctx.fillRect(c1*cs,r1*cs,(c2-c1+1)*cs,(r2-r1+1)*cs);ctx.strokeStyle=C.ps;ctx.lineWidth=2;ctx.setLineDash([4,3]);ctx.strokeRect(c1*cs+1,r1*cs+1,(c2-c1+1)*cs-2,(r2-r1+1)*cs-2);ctx.setLineDash([]);}
+for(let r=0;r<=rows;r++){ctx.strokeStyle=(r%5===0)?C.b:C.g;ctx.lineWidth=(r%5===0)?1:.5;ctx.beginPath();ctx.moveTo(0,r*cs);ctx.lineTo(cols*cs,r*cs);ctx.stroke();}
+for(let c=0;c<=cols;c++){ctx.strokeStyle=(c%5===0)?C.b:C.g;ctx.lineWidth=(c%5===0)?1:.5;ctx.beginPath();ctx.moveTo(c*cs,0);ctx.lineTo(c*cs,rows*cs);ctx.stroke();}
+ctx.strokeStyle=C.b;ctx.lineWidth=2;ctx.strokeRect(1,1,cols*cs-2,rows*cs-2);
+const fs=Math.max(Math.min(cs*.45,22),9);ctx.font=`500 ${fs}px "DM Mono",monospace`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle=C.cl;
+for(let r=0;r<rows;r++)for(let c=0;c<cols;c++)if(clues[r][c]>0)ctx.fillText(clues[r][c],c*cs+cs/2,r*cs+cs/2);}
+reset(){this.playerRects=[];this.solved=false;this.startTime=Date.now();this.render();}
+resize(){this.setupCanvas();this.render();}}
+// ── END ENGINE ──────────────────────────────────────────────────────────────
+
+let curRows=10, curCols=10, puzzleIndex=1, game=null, timerInterval=null;
+function fmtTime(s){return `${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`;}
+
+function loadPuzzle(rows,cols,name,isNew){
+  if(isNew) puzzleIndex++;
+  const seed=Math.floor(Math.random()*1e9)+1;
+  const puzzle=generatePuzzle(rows,cols,seed);
+  const canvas=document.getElementById('game-canvas');
+  game=new ShikakuGame(puzzle,canvas);
+  document.getElementById('diff-badge').textContent=name;
+  document.getElementById('puzzle-counter').textContent=`Puzzle #${puzzleIndex}`;
+  clearInterval(timerInterval);
+  timerInterval=setInterval(()=>{document.getElementById('timer').textContent=fmtTime(Math.floor((Date.now()-game.startTime)/1000));},500);
+  game.onSolve=(elapsed)=>{
+    clearInterval(timerInterval);
+    document.getElementById('timer').textContent=fmtTime(elapsed);
+    document.getElementById('win-time').textContent=fmtTime(elapsed);
+    document.getElementById('win-desc').textContent=`${rows}×${cols} puzzle solved`;
+    setTimeout(()=>document.getElementById('win-overlay').classList.add('show'),500);
+  };
+}
+
+document.querySelectorAll('.size-btn').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('.size-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    curRows=+btn.dataset.rows; curCols=+btn.dataset.cols;
+    puzzleIndex=0;
+    loadPuzzle(curRows,curCols,btn.dataset.name,true);
+  });
+});
+document.getElementById('reset-btn').addEventListener('click',()=>game?.reset());
+document.getElementById('new-btn').addEventListener('click',()=>{
+  const active=document.querySelector('.size-btn.active');
+  loadPuzzle(curRows,curCols,active.dataset.name,true);
+});
+document.getElementById('win-next').addEventListener('click',()=>{
+  document.getElementById('win-overlay').classList.remove('show');
+  const active=document.querySelector('.size-btn.active');
+  loadPuzzle(curRows,curCols,active.dataset.name,true);
+});
+document.getElementById('win-close').addEventListener('click',()=>document.getElementById('win-overlay').classList.remove('show'));
+document.getElementById('win-overlay').addEventListener('click',e=>{if(e.target===e.currentTarget)e.currentTarget.classList.remove('show');});
+window.addEventListener('resize',()=>game?.resize());
+
+loadPuzzle(10,10,'Classic',false);
+</script>
+</body>
+</html>
