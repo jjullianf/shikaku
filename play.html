@@ -1,14 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-45EFHESZW4"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag("js", new Date());
-  gtag("config", "G-45EFHESZW4");
-</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <title>Shikaku — Play</title>
@@ -44,9 +36,12 @@ main{padding-top:56px;min-height:100vh}
 .game-area{display:flex;flex-direction:column;align-items:center;gap:18px}
 .game-meta{display:flex;justify-content:space-between;align-items:center;width:100%;max-width:912px;font-size:.72rem;color:var(--ink3);letter-spacing:.08em}
 .timer{font-variant-numeric:tabular-nums;color:var(--ink2)}
-.canvas-wrap{position:relative;width:100%;max-width:912px;border-radius:var(--r);box-shadow:var(--shadow);background:var(--paper2);touch-action:pan-x pan-y;cursor:crosshair;display:block;overflow:auto}
-.canvas-wrap canvas{position:sticky;top:0;left:0;display:block;z-index:1}
-#puzzle-spacer{position:absolute;top:0;left:0;pointer-events:none;z-index:0}
+/* Outer wrapper: fixed viewport size, clips overflow */
+.canvas-outer{position:relative;width:100%;max-width:912px;border-radius:var(--r);box-shadow:var(--shadow);background:var(--paper2)}
+/* Inner scroll container: shows scrollbars when content > viewport */
+.canvas-scroll{width:100%;overflow:auto;border-radius:var(--r)}
+/* The canvas itself */
+.canvas-scroll canvas{display:block;cursor:crosshair;touch-action:none}
 .zoom-controls{display:flex;gap:8px;align-items:center}
 .zoom-btn{font-family:'DM Mono',monospace;font-size:1.1rem;width:34px;height:34px;display:flex;align-items:center;justify-content:center;border:1px solid var(--border);background:var(--paper2);color:var(--ink2);cursor:pointer;border-radius:var(--r);transition:all var(--t);flex-shrink:0;line-height:1}
 .zoom-btn:hover{background:var(--paper3);color:var(--ink);border-color:var(--gold2)}
@@ -112,9 +107,10 @@ main{padding-top:56px;min-height:100vh}
       <span class="puzzle-counter" id="puzzle-counter">Puzzle #1</span>
       <span class="timer" id="timer">0:00</span>
     </div>
-    <div class="canvas-wrap" id="canvas-wrap">
-      <canvas id="game-canvas"></canvas>
-      <div id="puzzle-spacer"></div>
+    <div class="canvas-outer" id="canvas-outer">
+      <div class="canvas-scroll" id="canvas-scroll">
+        <canvas id="game-canvas"></canvas>
+      </div>
     </div>
     <div class="game-controls">
       <button class="btn" id="reset-btn">↺ Reset</button>
@@ -125,7 +121,7 @@ main{padding-top:56px;min-height:100vh}
       </div>
       <button class="btn btn-primary" id="new-btn">→ New</button>
     </div>
-    <p class="game-hint">Drag to draw · Scroll or pinch to zoom · Pan when zoomed in · Click red to erase</p>
+    <p class="game-hint">Drag to draw · Scroll or pinch to zoom · Scrollbars to pan · Click red to erase</p>
   </div>
 </div></main>
 
@@ -137,7 +133,6 @@ main{padding-top:56px;min-height:100vh}
     <span class="time-display" id="win-time">—</span>
     <div class="win-card-btns">
       <button class="btn btn-primary" id="win-next">→ Next puzzle</button>
-      <button class="btn" id="win-share">↗ Share</button>
       <button class="btn" id="win-close">✕ Close</button>
     </div>
   </div>
@@ -152,83 +147,65 @@ function generateSimplePuzzle(rows,cols,seed){const rng=mulberry32(seed),rects=[
 function generatePuzzle(rows,cols,seed){const rng=mulberry32(seed),maxArea=maxRectArea(rows,cols),grid=Array.from({length:rows},()=>new Array(cols).fill(-1)),rects=[];let attempts=0;while(true){let startR=-1,startC=-1;outer:for(let r=0;r<rows;r++)for(let c=0;c<cols;c++)if(grid[r][c]===-1){startR=r;startC=c;break outer;}if(startR===-1)break;let placed=false;const maxH=Math.min(rows-startR,maxArea),maxW=Math.min(cols-startC,maxArea),cands=[];for(let h=1;h<=maxH;h++)for(let w=1;w<=maxW;w++)if(h*w<=maxArea)cands.push([h,w]);for(let i=cands.length-1;i>0;i--){const j=Math.floor(rng()*(i+1));[cands[i],cands[j]]=[cands[j],cands[i]];}for(const[h,w]of cands){let fits=true;for(let r=startR;r<startR+h&&fits;r++)for(let c=startC;c<startC+w&&fits;c++)if(grid[r][c]!==-1)fits=false;if(!fits)continue;const id=rects.length,clueR=startR+Math.floor(rng()*h),clueC=startC+Math.floor(rng()*w);for(let r=startR;r<startR+h;r++)for(let c=startC;c<startC+w;c++)grid[r][c]=id;rects.push({r1:startR,c1:startC,r2:startR+h-1,c2:startC+w-1,clueR,clueC,area:h*w});placed=true;break;}if(!placed){attempts++;if(attempts>300)return generateSimplePuzzle(rows,cols,seed+attempts);for(let r=0;r<rows;r++)grid[r].fill(-1);rects.length=0;rng();rng();}}const clues=Array.from({length:rows},()=>new Array(cols).fill(0));for(const rect of rects)clues[rect.clueR][rect.clueC]=rect.area;return{rows,cols,clues,solution:rects,grid};}
 
 // ── GAME ENGINE ─────────────────────────────────────────────────────────────
-// Cell size in puzzle-space (always rendered at this resolution, then zoomed)
+// Base cell size in puzzle-space pixels (canvas is always rendered at this resolution)
 const BASE_CELL = 52;
 
 class ShikakuGame {
-  constructor(puzzle, canvas, wrap) {
+  constructor(puzzle, canvas, scrollEl) {
     this.puzzle = puzzle;
     this.canvas = canvas;
-    this.wrap = wrap;
+    this.scroll = scrollEl; // the scrollable div
     this.ctx = canvas.getContext('2d');
     this.playerRects = [];
     this.solved = false;
     this.startTime = Date.now();
     this.onSolve = null;
-
-    // View transform: panX/panY in screen pixels, zoom = scale factor
     this.zoom = 1;
-    this.panX = 0;
-    this.panY = 0;
 
-    // Interaction state
-    this.mode = 'idle'; // 'idle' | 'draw' | 'pan'
+    // Interaction
+    this.mode = 'idle';
     this.drawStart = null;
     this.drawCurrent = null;
     this.preview = null;
-
-    // Track if pointer moved significantly (to distinguish click from drag)
     this.pointerMoved = false;
     this.pointerDownPos = null;
 
-    this._setupCanvas();
+    this._init();
     this._bindEvents();
-    this._fitToWrap();
     this.render();
   }
 
   // ── Setup ──
-  _setupCanvas() {
+  _init() {
     const dpr = window.devicePixelRatio || 1;
-    const w = Math.min(this.wrap.clientWidth || 912, 912);
-    const h = Math.min(w, window.innerHeight - 280);
-    this.wrap.style.height = h + 'px';
-    // Canvas is exactly the visible area
-    this.canvas.width = w * dpr;
-    this.canvas.height = h * dpr;
-    this.canvas.style.width = w + 'px';
-    this.canvas.style.height = h + 'px';
-    this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    this._W = w;
-    this._H = h;
-    this._updateSpacer();
-  }
-
-  _updateSpacer() {
     const {rows, cols} = this.puzzle;
-    const spacer = document.getElementById('puzzle-spacer');
-    if (spacer) {
-      spacer.style.width = (cols * BASE_CELL * this.zoom) + 'px';
-      spacer.style.height = (rows * BASE_CELL * this.zoom) + 'px';
-    }
-  }
+    // Viewport size = scroll container size
+    const vw = this.scroll.clientWidth || 912;
+    const vh = Math.min(vw, window.innerHeight - 280);
+    this.scroll.style.height = vh + 'px';
+    this._vw = vw;
+    this._vh = vh;
 
-  // panX/panY are now driven by scroll position
-  get panX() { return -this.wrap.scrollLeft; }
-  get panY() { return -this.wrap.scrollTop; }
-  set panX(v) { this.wrap.scrollLeft = -v; }
-  set panY(v) { this.wrap.scrollTop = -v; }
-
-  _fitToWrap() {
-    const {rows, cols} = this.puzzle;
-    const puzzleW = cols * BASE_CELL;
-    const puzzleH = rows * BASE_CELL;
-    const fitZoom = Math.min(this._W / puzzleW, this._H / puzzleH) * 0.96;
+    // Calculate fit zoom
+    const fitZoom = Math.min(vw / (cols * BASE_CELL), vh / (rows * BASE_CELL)) * 0.96;
     this.zoom = fitZoom;
-    this._updateSpacer();
-    // Center the puzzle
-    this.wrap.scrollLeft = Math.max(0, (cols * BASE_CELL * this.zoom - this._W) / 2);
-    this.wrap.scrollTop  = Math.max(0, (rows * BASE_CELL * this.zoom - this._H) / 2);
+
+    // Canvas = puzzle size * zoom (actual rendered size)
+    const cw = Math.round(cols * BASE_CELL * this.zoom);
+    const ch = Math.round(rows * BASE_CELL * this.zoom);
+
+    // If puzzle smaller than viewport, center it with padding
+    const padX = Math.max(0, Math.floor((vw - cw) / 2));
+    const padY = Math.max(0, Math.floor((vh - ch) / 2));
+    this.canvas.style.margin = `${padY}px ${padX}px`;
+
+    // Set canvas pixel dimensions (high-res)
+    this.canvas.width  = cw * dpr;
+    this.canvas.height = ch * dpr;
+    this.canvas.style.width  = cw + 'px';
+    this.canvas.style.height = ch + 'px';
+    this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
     this._updateZoomLabel();
   }
 
@@ -237,65 +214,70 @@ class ShikakuGame {
     if (el) el.textContent = Math.round(this.zoom * 100) + '%';
   }
 
-  // ── Coordinate conversion ──
-  _screenToWorld(sx, sy) {
-    return {
-      x: (this.wrap.scrollLeft + sx) / this.zoom,
-      y: (this.wrap.scrollTop  + sy) / this.zoom
-    };
-  }
-
-  _worldToCell(wx, wy) {
-    const c = Math.floor(wx / BASE_CELL);
-    const r = Math.floor(wy / BASE_CELL);
+  // Canvas-local px → puzzle cell
+  _canvasToCell(cx, cy) {
     const {rows, cols} = this.puzzle;
+    const c = Math.floor(cx / (BASE_CELL * this.zoom));
+    const r = Math.floor(cy / (BASE_CELL * this.zoom));
     if (r < 0 || r >= rows || c < 0 || c >= cols) return null;
     return {r, c};
   }
 
-  _screenToCell(sx, sy) {
-    const w = this._screenToWorld(sx, sy);
-    return this._worldToCell(w.x, w.y);
-  }
-
-  // Get event position relative to canvas element (logical pixels)
+  // Event → canvas-local coords
   _evPos(e, touch) {
     const rect = this.canvas.getBoundingClientRect();
-    const dpr = window.devicePixelRatio || 1;
     const src = touch || (e.touches ? e.touches[0] : e);
-    // getBoundingClientRect gives CSS pixels; canvas is dpr× larger
-    // but we already scaled ctx, so just use CSS px
     return {
       x: src.clientX - rect.left,
       y: src.clientY - rect.top
     };
   }
 
-  // ── Zoom/Pan ──
-  _clampPan() {
-    // Native scroll clamping handles this — nothing to do
-  }
+  // Zoom centered on viewport point (vx, vy)
+  _zoomTo(newZoom, vx, vy) {
+    newZoom = Math.max(0.15, Math.min(8, newZoom));
+    const dpr = window.devicePixelRatio || 1;
+    const {rows, cols} = this.puzzle;
 
-  fitToScreen() {
-    this._fitToWrap();
-    this.render();
-  }
+    // Point in puzzle-space before zoom
+    const worldX = (this.scroll.scrollLeft + vx) / this.zoom;
+    const worldY = (this.scroll.scrollTop  + vy) / this.zoom;
 
-  zoomAt(factor, sx, sy) {
-    const newZoom = Math.max(0.15, Math.min(8, this.zoom * factor));
-    // Keep the point under cursor fixed
-    const worldX = (this.wrap.scrollLeft + sx) / this.zoom;
-    const worldY = (this.wrap.scrollTop  + sy) / this.zoom;
     this.zoom = newZoom;
-    this._updateSpacer();
-    this.wrap.scrollLeft = worldX * newZoom - sx;
-    this.wrap.scrollTop  = worldY * newZoom - sy;
+
+    const cw = Math.round(cols * BASE_CELL * this.zoom);
+    const ch = Math.round(rows * BASE_CELL * this.zoom);
+    const padX = Math.max(0, Math.floor((this._vw - cw) / 2));
+    const padY = Math.max(0, Math.floor((this._vh - ch) / 2));
+    this.canvas.style.margin = `${padY}px ${padX}px`;
+    this.canvas.width  = cw * dpr;
+    this.canvas.height = ch * dpr;
+    this.canvas.style.width  = cw + 'px';
+    this.canvas.style.height = ch + 'px';
+    this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    // Restore scroll so same world point stays under cursor
+    this.scroll.scrollLeft = worldX * this.zoom - vx;
+    this.scroll.scrollTop  = worldY * this.zoom - vy;
+
     this._updateZoomLabel();
     this.render();
   }
 
-  zoomIn()  { this.zoomAt(1.35, this._W/2, this._H/2); }
-  zoomOut() { this.zoomAt(1/1.35, this._W/2, this._H/2); }
+  fitToScreen() {
+    const {rows, cols} = this.puzzle;
+    const fitZoom = Math.min(this._vw / (cols * BASE_CELL), this._vh / (rows * BASE_CELL)) * 0.96;
+    this._zoomTo(fitZoom, this._vw / 2, this._vh / 2);
+    // Re-center scroll
+    const cw = cols * BASE_CELL * fitZoom;
+    const ch = rows * BASE_CELL * fitZoom;
+    this.scroll.scrollLeft = Math.max(0, (cw - this._vw) / 2);
+    this.scroll.scrollTop  = Math.max(0, (ch - this._vh) / 2);
+    this.render();
+  }
+
+  zoomIn()  { this._zoomTo(this.zoom * 1.35, this._vw / 2, this._vh / 2); }
+  zoomOut() { this._zoomTo(this.zoom / 1.35, this._vw / 2, this._vh / 2); }
 
   // ── Rect logic ──
   _rectIsValid(p) {
@@ -307,19 +289,18 @@ class ShikakuGame {
   }
 
   _rectAt(r, c) {
-    return this.playerRects.find(p => p.r1<=r && p.r2>=r && p.c1<=c && p.c2>=c) || null;
+    return this.playerRects.find(p => p.r1<=r&&p.r2>=r&&p.c1<=c&&p.c2>=c) || null;
   }
 
   placeRect(r1,c1,r2,c2) {
-    // Remove overlapping rects
-    this.playerRects = this.playerRects.filter(p => !(p.r1<=r2&&p.r2>=r1&&p.c1<=c2&&p.c2>=c1));
+    this.playerRects = this.playerRects.filter(p=>!(p.r1<=r2&&p.r2>=r1&&p.c1<=c2&&p.c2>=c1));
     this.playerRects.push({r1,c1,r2,c2});
     this.render();
     this._checkSolution();
   }
 
   eraseAt(r,c) {
-    this.playerRects = this.playerRects.filter(p => !(p.r1<=r&&p.r2>=r&&p.c1<=c&&p.c2>=c));
+    this.playerRects = this.playerRects.filter(p=>!(p.r1<=r&&p.r2>=r&&p.c1<=c&&p.c2>=c));
     this.render();
   }
 
@@ -340,247 +321,155 @@ class ShikakuGame {
   }
 
   resize() {
-    const dpr = window.devicePixelRatio || 1;
-    const w = Math.min(this.wrap.clientWidth || 912, 912);
-    const h = Math.min(w, window.innerHeight - 280);
-    this.wrap.style.height = h + 'px';
-    this.canvas.width = w * dpr;
-    this.canvas.height = h * dpr;
-    this.canvas.style.width = w + 'px';
-    this.canvas.style.height = h + 'px';
-    this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    this._W = w;
-    this._H = h;
-    this._updateSpacer();
-    this._fitToWrap();
-    this.render();
+    const vw = this.scroll.clientWidth || 912;
+    const vh = Math.min(vw, window.innerHeight - 280);
+    this.scroll.style.height = vh + 'px';
+    this._vw = vw; this._vh = vh;
+    this.fitToScreen();
   }
 
   // ── Events ──
   _bindEvents() {
     const c = this.canvas;
 
-    // Re-render whenever user scrolls (native scroll handles pan)
-    this.wrap.addEventListener('scroll', () => this.render(), {passive: true});
-
-    // ── Mouse ──
+    // Mouse down
     c.addEventListener('mousedown', e => {
-      if (e.button !== 0) return;
-      if (this.solved) return;
+      if (e.button !== 0 || this.solved) return;
       const pos = this._evPos(e);
       this.pointerDownPos = pos;
       this.pointerMoved = false;
-      const cell = this._screenToCell(pos.x, pos.y);
+      const cell = this._canvasToCell(pos.x, pos.y);
       if (!cell) return;
-
-      // Click on invalid rect → erase it immediately
-      const existing = this._rectAt(cell.r, cell.c);
-      if (existing && !this._rectIsValid(existing)) {
-        this.eraseAt(cell.r, cell.c);
-        this.pointerDownPos = null;
-        return;
-      }
-
+      // Click on invalid rect → erase immediately
+      const ex = this._rectAt(cell.r, cell.c);
+      if (ex && !this._rectIsValid(ex)) { this.eraseAt(cell.r, cell.c); this.pointerDownPos=null; return; }
       this.mode = 'draw';
-      this.drawStart = cell;
-      this.drawCurrent = cell;
+      this.drawStart = cell; this.drawCurrent = cell;
       this.preview = {r1:cell.r,c1:cell.c,r2:cell.r,c2:cell.c};
       this.render();
     });
 
     c.addEventListener('mousemove', e => {
-      if (this.mode === 'idle') return;
+      if (this.mode !== 'draw') return;
       const pos = this._evPos(e);
-      if (this.pointerDownPos) {
-        const dx = pos.x - this.pointerDownPos.x;
-        const dy = pos.y - this.pointerDownPos.y;
-        if (Math.hypot(dx,dy) > 4) this.pointerMoved = true;
-      }
-
-      if (this.mode === 'pan') {
-        // Middle mouse or space+drag for pan (handled below)
-        return;
-      }
-
-      if (this.mode === 'draw' && this.drawStart) {
-        const cell = this._screenToCell(pos.x, pos.y);
-        if (cell) {
-          this.drawCurrent = cell;
-          this.preview = {
-            r1:Math.min(this.drawStart.r,cell.r), c1:Math.min(this.drawStart.c,cell.c),
-            r2:Math.max(this.drawStart.r,cell.r), c2:Math.max(this.drawStart.c,cell.c)
-          };
-          this.render();
-        }
+      if (this.pointerDownPos && Math.hypot(pos.x-this.pointerDownPos.x, pos.y-this.pointerDownPos.y) > 4) this.pointerMoved = true;
+      const cell = this._canvasToCell(pos.x, pos.y);
+      if (cell && this.drawStart) {
+        this.drawCurrent = cell;
+        this.preview = {r1:Math.min(this.drawStart.r,cell.r),c1:Math.min(this.drawStart.c,cell.c),r2:Math.max(this.drawStart.r,cell.r),c2:Math.max(this.drawStart.c,cell.c)};
+        this.render();
       }
     });
 
     c.addEventListener('mouseup', e => {
-      if (this.mode === 'draw' && this.drawStart) {
-        if (!this.pointerMoved) {
-          // Pure click — erase if rect already here, otherwise place 1×1
-          const existing = this._rectAt(this.drawStart.r, this.drawStart.c);
-          if (existing) {
-            this.eraseAt(this.drawStart.r, this.drawStart.c);
-          } else {
-            this.placeRect(this.drawStart.r, this.drawStart.c, this.drawStart.r, this.drawStart.c);
-          }
-        } else if (this.preview) {
-          this.placeRect(this.preview.r1, this.preview.c1, this.preview.r2, this.preview.c2);
-        }
+      if (this.mode !== 'draw') return;
+      if (!this.pointerMoved && this.drawStart) {
+        const ex = this._rectAt(this.drawStart.r, this.drawStart.c);
+        if (ex) this.eraseAt(this.drawStart.r, this.drawStart.c);
+        else this.placeRect(this.drawStart.r, this.drawStart.c, this.drawStart.r, this.drawStart.c);
+      } else if (this.preview) {
+        this.placeRect(this.preview.r1, this.preview.c1, this.preview.r2, this.preview.c2);
       }
-      this.mode = 'idle';
-      this.drawStart = null;
-      this.drawCurrent = null;
-      this.preview = null;
-      this.pointerDownPos = null;
+      this.mode='idle'; this.drawStart=null; this.drawCurrent=null; this.preview=null; this.pointerDownPos=null;
       this.render();
     });
 
     c.addEventListener('mouseleave', e => {
-      if (this.mode === 'draw' && this.preview) {
-        this.placeRect(this.preview.r1, this.preview.c1, this.preview.r2, this.preview.c2);
-      }
-      this.mode = 'idle';
-      this.drawStart = null;
-      this.preview = null;
-      this.render();
+      if (this.mode==='draw' && this.preview) this.placeRect(this.preview.r1,this.preview.c1,this.preview.r2,this.preview.c2);
+      this.mode='idle'; this.drawStart=null; this.preview=null; this.render();
     });
 
-    // Right-click → erase
     c.addEventListener('contextmenu', e => {
       e.preventDefault();
       const pos = this._evPos(e);
-      const cell = this._screenToCell(pos.x, pos.y);
+      const cell = this._canvasToCell(pos.x, pos.y);
       if (cell) this.eraseAt(cell.r, cell.c);
     });
 
-    // Scroll wheel → zoom (desktop)
+    // Scroll wheel → zoom (prevent default scroll on canvas only)
     c.addEventListener('wheel', e => {
       e.preventDefault();
       const pos = this._evPos(e);
-      this.zoomAt(e.deltaY < 0 ? 1.12 : 1/1.12, pos.x, pos.y);
+      this._zoomTo(e.deltaY < 0 ? this.zoom * 1.12 : this.zoom / 1.12, pos.x, pos.y);
     }, {passive: false});
 
-    // ── Touch ──
+    // Touch
     let lastTouches = null;
 
     c.addEventListener('touchstart', e => {
       e.preventDefault();
       const ts = e.touches;
-
       if (ts.length === 1 && !this.solved) {
         const pos = this._evPos(e, ts[0]);
         this.pointerDownPos = pos;
         this.pointerMoved = false;
-        lastTouches = null;
-
-        const cell = this._screenToCell(pos.x, pos.y);
+        const cell = this._canvasToCell(pos.x, pos.y);
         if (!cell) return;
-
-        // Click on invalid rect → erase
-        const existing = this._rectAt(cell.r, cell.c);
-        if (existing && !this._rectIsValid(existing)) {
-          this.eraseAt(cell.r, cell.c);
-          this.pointerDownPos = null;
-          return;
-        }
-
-        this.mode = 'draw';
-        this.drawStart = cell;
-        this.drawCurrent = cell;
-        this.preview = {r1:cell.r,c1:cell.c,r2:cell.r,c2:cell.c};
+        const ex = this._rectAt(cell.r, cell.c);
+        if (ex && !this._rectIsValid(ex)) { this.eraseAt(cell.r, cell.c); this.pointerDownPos=null; return; }
+        this.mode='draw'; this.drawStart=cell; this.drawCurrent=cell;
+        this.preview={r1:cell.r,c1:cell.c,r2:cell.r,c2:cell.c};
         this.render();
-
-      } else if (ts.length === 2) {
-        // Two fingers → switch to pinch/pan mode
-        this.mode = 'pan';
-        this.drawStart = null;
-        this.preview = null;
-        lastTouches = [{x:ts[0].clientX,y:ts[0].clientY},{x:ts[1].clientX,y:ts[1].clientY}];
-        this.render();
+      } else if (ts.length >= 2) {
+        this.mode='idle'; this.preview=null; this.render();
+        lastTouches=[{x:ts[0].clientX,y:ts[0].clientY},{x:ts[1].clientX,y:ts[1].clientY}];
       }
-    }, {passive: false});
+    }, {passive:false});
 
     c.addEventListener('touchmove', e => {
       e.preventDefault();
       const ts = e.touches;
-
-      if (ts.length === 2) {
-        // Pinch zoom + pan
-        this.mode = 'pan';
-        this.preview = null;
-        const cur = [{x:ts[0].clientX,y:ts[0].clientY},{x:ts[1].clientX,y:ts[1].clientY}];
-        if (lastTouches && lastTouches.length === 2) {
-          const rect = this.canvas.getBoundingClientRect();
-          const oldD = Math.hypot(lastTouches[0].x-lastTouches[1].x, lastTouches[0].y-lastTouches[1].y);
-          const newD = Math.hypot(cur[0].x-cur[1].x, cur[0].y-cur[1].y);
-          const midX = (cur[0].x+cur[1].x)/2 - rect.left;
-          const midY = (cur[0].y+cur[1].y)/2 - rect.top;
-          if (oldD > 1) this.zoomAt(newD/oldD, midX, midY);
+      if (ts.length >= 2) {
+        const cur=[{x:ts[0].clientX,y:ts[0].clientY},{x:ts[1].clientX,y:ts[1].clientY}];
+        if (lastTouches) {
+          const rect = c.getBoundingClientRect();
+          const oldD=Math.hypot(lastTouches[0].x-lastTouches[1].x,lastTouches[0].y-lastTouches[1].y);
+          const newD=Math.hypot(cur[0].x-cur[1].x,cur[0].y-cur[1].y);
+          const mx=(cur[0].x+cur[1].x)/2-rect.left, my=(cur[0].y+cur[1].y)/2-rect.top;
+          if (oldD>1) this._zoomTo(this.zoom*(newD/oldD), mx, my);
         }
-        lastTouches = cur;
-        return;
+        lastTouches=cur; return;
       }
-
-      if (ts.length === 1) {
-        const pos = this._evPos(e, ts[0]);
-        if (this.pointerDownPos) {
-          const dx = pos.x - this.pointerDownPos.x;
-          const dy = pos.y - this.pointerDownPos.y;
-          if (Math.hypot(dx,dy) > 5) this.pointerMoved = true;
-        }
-
-        if (this.mode === 'draw' && this.drawStart) {
-          const cell = this._screenToCell(pos.x, pos.y);
-          if (cell) {
-            this.drawCurrent = cell;
-            this.preview = {
-              r1:Math.min(this.drawStart.r,cell.r), c1:Math.min(this.drawStart.c,cell.c),
-              r2:Math.max(this.drawStart.r,cell.r), c2:Math.max(this.drawStart.c,cell.c)
-            };
-            this.render();
-          }
+      if (ts.length===1 && this.mode==='draw' && this.drawStart) {
+        const pos=this._evPos(e,ts[0]);
+        if (Math.hypot(pos.x-this.pointerDownPos.x,pos.y-this.pointerDownPos.y)>5) this.pointerMoved=true;
+        const cell=this._canvasToCell(pos.x,pos.y);
+        if (cell) {
+          this.drawCurrent=cell;
+          this.preview={r1:Math.min(this.drawStart.r,cell.r),c1:Math.min(this.drawStart.c,cell.c),r2:Math.max(this.drawStart.r,cell.r),c2:Math.max(this.drawStart.c,cell.c)};
+          this.render();
         }
       }
-    }, {passive: false});
+    }, {passive:false});
 
     c.addEventListener('touchend', e => {
       e.preventDefault();
-      if (e.touches.length === 0) {
-        if (this.mode === 'draw' && this.drawStart) {
+      if (e.touches.length===0) {
+        if (this.mode==='draw' && this.drawStart) {
           if (!this.pointerMoved) {
-            // Tap — erase if rect exists here, otherwise place 1×1
-            const existing = this._rectAt(this.drawStart.r, this.drawStart.c);
-            if (existing) {
-              this.eraseAt(this.drawStart.r, this.drawStart.c);
-            } else {
-              this.placeRect(this.drawStart.r, this.drawStart.c, this.drawStart.r, this.drawStart.c);
-            }
+            const ex=this._rectAt(this.drawStart.r,this.drawStart.c);
+            if (ex) this.eraseAt(this.drawStart.r,this.drawStart.c);
+            else this.placeRect(this.drawStart.r,this.drawStart.c,this.drawStart.r,this.drawStart.c);
           } else if (this.preview) {
-            this.placeRect(this.preview.r1, this.preview.c1, this.preview.r2, this.preview.c2);
+            this.placeRect(this.preview.r1,this.preview.c1,this.preview.r2,this.preview.c2);
           }
         }
-        this.mode = 'idle';
-        this.drawStart = null;
-        this.preview = null;
-        this.pointerDownPos = null;
-        lastTouches = null;
+        this.mode='idle'; this.drawStart=null; this.preview=null; this.pointerDownPos=null; lastTouches=null;
         this.render();
-      } else if (e.touches.length === 1) {
-        // One finger lifted from two-finger gesture → reset to idle
-        this.mode = 'idle';
-        lastTouches = null;
+      } else if (e.touches.length===1) {
+        this.mode='idle'; lastTouches=null;
       }
-    }, {passive: false});
+    }, {passive:false});
   }
 
   // ── Render ──
   render() {
     const ctx = this.ctx;
     const {rows, cols, clues} = this.puzzle;
-    const W = this._W, H = this._H;
+    const z = this.zoom;
     const cs = BASE_CELL;
+    const W = Math.round(cols * cs * z);
+    const H = Math.round(rows * cs * z);
     const dk = window.matchMedia('(prefers-color-scheme: dark)').matches;
 
     const C = dk ? {
@@ -597,126 +486,87 @@ class ShikakuGame {
       sf:'rgba(45,135,75,0.13)', ss:'rgba(45,135,75,0.7)',
     };
 
-    // Background
     ctx.clearRect(0, 0, W, H);
     ctx.fillStyle = C.bg;
     ctx.fillRect(0, 0, W, H);
 
-    // Apply zoom/pan transform using scroll position
-    const scrollX = this.wrap.scrollLeft;
-    const scrollY = this.wrap.scrollTop;
+    // Apply zoom transform — canvas coords = puzzle-space * zoom
     ctx.save();
-    ctx.translate(-scrollX, -scrollY);
-    ctx.scale(this.zoom, this.zoom);
+    ctx.scale(z, z);
 
-    const PW = cols * cs, PH = rows * cs;
-
-    // Fill puzzle background
-    ctx.fillStyle = C.bg;
-    ctx.fillRect(0, 0, PW, PH);
-
-    // Draw placed rects
+    // Player rects
     for (const p of this.playerRects) {
       const valid = this._rectIsValid(p);
       const fill = this.solved ? C.sf : (valid ? C.rf : C.ef);
       const stroke = this.solved ? C.ss : (valid ? C.rs : C.es);
-      const x=p.c1*cs, y=p.r1*cs, w=(p.c2-p.c1+1)*cs, h=(p.r2-p.r1+1)*cs;
-      ctx.fillStyle = fill;
-      ctx.fillRect(x+1, y+1, w-2, h-2);
-      ctx.strokeStyle = stroke;
-      ctx.lineWidth = 2 / this.zoom;
-      ctx.strokeRect(x+1.5/this.zoom, y+1.5/this.zoom, w-3/this.zoom, h-3/this.zoom);
+      const x=p.c1*cs,y=p.r1*cs,w=(p.c2-p.c1+1)*cs,h=(p.r2-p.r1+1)*cs;
+      ctx.fillStyle=fill; ctx.fillRect(x+1,y+1,w-2,h-2);
+      ctx.strokeStyle=stroke; ctx.lineWidth=2/z;
+      ctx.strokeRect(x+1.5/z,y+1.5/z,w-3/z,h-3/z);
     }
 
-    // Draw preview
+    // Preview
     if (this.preview) {
-      const {r1,c1,r2,c2} = this.preview;
-      const x=c1*cs, y=r1*cs, w=(c2-c1+1)*cs, h=(r2-r1+1)*cs;
-      const area = (c2-c1+1)*(r2-r1+1);
-      ctx.fillStyle = C.pf;
-      ctx.fillRect(x, y, w, h);
-      ctx.strokeStyle = C.ps;
-      ctx.lineWidth = 2 / this.zoom;
-      ctx.setLineDash([5/this.zoom, 3/this.zoom]);
-      ctx.strokeRect(x+1/this.zoom, y+1/this.zoom, w-2/this.zoom, h-2/this.zoom);
+      const {r1,c1,r2,c2}=this.preview;
+      const x=c1*cs,y=r1*cs,w=(c2-c1+1)*cs,h=(r2-r1+1)*cs;
+      const area=(c2-c1+1)*(r2-r1+1);
+      ctx.fillStyle=C.pf; ctx.fillRect(x,y,w,h);
+      ctx.strokeStyle=C.ps; ctx.lineWidth=2/z;
+      ctx.setLineDash([5/z,3/z]);
+      ctx.strokeRect(x+1/z,y+1/z,w-2/z,h-2/z);
       ctx.setLineDash([]);
-
-      // Area count label
-      const lfs = Math.max(cs * 0.55, 14);
-      ctx.font = `700 ${lfs}px "DM Mono",monospace`;
-      const tw = ctx.measureText(String(area)).width;
-      const lx = x+w/2, ly = y+h/2;
-      const pad = lfs * 0.3;
-      ctx.fillStyle = dk ? 'rgba(20,18,14,0.85)' : 'rgba(250,249,245,0.9)';
-      ctx.beginPath();
-      ctx.roundRect(lx-tw/2-pad, ly-lfs/2-pad*0.8, tw+pad*2, lfs+pad*1.6, 4);
-      ctx.fill();
-      ctx.fillStyle = dk ? '#c4a565' : '#7a6030';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText(String(area), lx, ly);
+      // Area label
+      const lfs=Math.max(cs*0.55,14);
+      ctx.font=`700 ${lfs}px "DM Mono",monospace`;
+      const tw=ctx.measureText(String(area)).width;
+      const lx=x+w/2,ly=y+h/2,pad=lfs*0.3;
+      ctx.fillStyle=dk?'rgba(20,18,14,0.85)':'rgba(250,249,245,0.9)';
+      ctx.beginPath(); ctx.roundRect(lx-tw/2-pad,ly-lfs/2-pad*0.8,tw+pad*2,lfs+pad*1.6,4); ctx.fill();
+      ctx.fillStyle=dk?'#c4a565':'#7a6030';
+      ctx.textAlign='center'; ctx.textBaseline='middle';
+      ctx.fillText(String(area),lx,ly);
     }
 
     // Grid lines
-    ctx.strokeStyle = C.grid;
-    ctx.lineWidth = 0.5 / this.zoom;
-    for (let r=0; r<=rows; r++) {
-      if (r%5===0) continue;
-      ctx.beginPath(); ctx.moveTo(0,r*cs); ctx.lineTo(PW,r*cs); ctx.stroke();
+    for(let r=0;r<=rows;r++){
+      ctx.strokeStyle=(r%5===0)?C.gridB:C.grid;
+      ctx.lineWidth=(r%5===0)?1/z:0.5/z;
+      ctx.beginPath(); ctx.moveTo(0,r*cs); ctx.lineTo(cols*cs,r*cs); ctx.stroke();
     }
-    for (let c=0; c<=cols; c++) {
-      if (c%5===0) continue;
-      ctx.beginPath(); ctx.moveTo(c*cs,0); ctx.lineTo(c*cs,PH); ctx.stroke();
+    for(let c=0;c<=cols;c++){
+      ctx.strokeStyle=(c%5===0)?C.gridB:C.grid;
+      ctx.lineWidth=(c%5===0)?1/z:0.5/z;
+      ctx.beginPath(); ctx.moveTo(c*cs,0); ctx.lineTo(c*cs,rows*cs); ctx.stroke();
     }
-    // Bold lines every 5
-    ctx.strokeStyle = C.gridB;
-    ctx.lineWidth = 1 / this.zoom;
-    for (let r=0; r<=rows; r++) {
-      if (r%5!==0) continue;
-      ctx.beginPath(); ctx.moveTo(0,r*cs); ctx.lineTo(PW,r*cs); ctx.stroke();
-    }
-    for (let c=0; c<=cols; c++) {
-      if (c%5!==0) continue;
-      ctx.beginPath(); ctx.moveTo(c*cs,0); ctx.lineTo(c*cs,PH); ctx.stroke();
-    }
-    // Border
-    ctx.strokeStyle = C.gridB;
-    ctx.lineWidth = 2 / this.zoom;
-    ctx.strokeRect(0, 0, PW, PH);
+    ctx.strokeStyle=C.gridB; ctx.lineWidth=2/z;
+    ctx.strokeRect(0,0,cols*cs,rows*cs);
 
-    // Clue numbers — always rendered at BASE_CELL size, crisp at any zoom
-    const fs = Math.round(cs * 0.48);
-    ctx.font = `600 ${fs}px "DM Mono",monospace`;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillStyle = C.clue;
-    for (let r=0; r<rows; r++) {
-      for (let c=0; c<cols; c++) {
-        if (clues[r][c] > 0) {
-          ctx.fillText(clues[r][c], c*cs+cs/2, r*cs+cs/2);
-        }
-      }
-    }
+    // Clue numbers
+    const fs=Math.round(cs*0.48);
+    ctx.font=`600 ${fs}px "DM Mono",monospace`;
+    ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillStyle=C.clue;
+    for(let r=0;r<rows;r++) for(let c=0;c<cols;c++)
+      if(clues[r][c]>0) ctx.fillText(clues[r][c],c*cs+cs/2,r*cs+cs/2);
 
     ctx.restore();
   }
 }
 
 // ── PAGE LOGIC ───────────────────────────────────────────────────────────────
-let game = null, timerInterval = null, puzzleIndex = 1;
+let game=null, timerInterval=null, puzzleIndex=1;
 function fmtTime(s){return `${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`;}
 
 function loadPuzzle(rows, cols, name, isNew) {
   if (isNew) puzzleIndex++;
-  const seed = Math.floor(Math.random() * 1e9) + 1;
+  const seed = Math.floor(Math.random()*1e9)+1;
   const puzzle = generatePuzzle(rows, cols, seed);
   const canvas = document.getElementById('game-canvas');
-  const wrap = document.getElementById('canvas-wrap');
-  game = new ShikakuGame(puzzle, canvas, wrap);
+  const scroll = document.getElementById('canvas-scroll');
+  game = new ShikakuGame(puzzle, canvas, scroll);
   document.getElementById('diff-badge').textContent = name;
   document.getElementById('puzzle-counter').textContent = `Puzzle #${puzzleIndex}`;
   clearInterval(timerInterval);
-  timerInterval = setInterval(() => {
+  timerInterval = setInterval(()=>{
     document.getElementById('timer').textContent = fmtTime(Math.floor((Date.now()-game.startTime)/1000));
   }, 500);
   game.onSolve = elapsed => {
@@ -724,46 +574,36 @@ function loadPuzzle(rows, cols, name, isNew) {
     document.getElementById('timer').textContent = fmtTime(elapsed);
     document.getElementById('win-time').textContent = fmtTime(elapsed);
     document.getElementById('win-desc').textContent = `${rows}×${cols} puzzle solved`;
-    setTimeout(() => document.getElementById('win-overlay').classList.add('show'), 600);
+    setTimeout(()=>document.getElementById('win-overlay').classList.add('show'), 600);
   };
 }
 
 document.querySelectorAll('.size-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('.size-btn').forEach(b => b.classList.remove('active'));
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.size-btn').forEach(b=>b.classList.remove('active'));
     btn.classList.add('active');
-    puzzleIndex = 0;
-    loadPuzzle(+btn.dataset.rows, +btn.dataset.cols, btn.dataset.name, true);
+    puzzleIndex=0;
+    loadPuzzle(+btn.dataset.rows,+btn.dataset.cols,btn.dataset.name,true);
   });
 });
-
-document.getElementById('zoom-in').addEventListener('click', () => game?.zoomIn());
-document.getElementById('zoom-out').addEventListener('click', () => game?.zoomOut());
-document.getElementById('zoom-fit').addEventListener('click', () => game?.fitToScreen());
-document.getElementById('reset-btn').addEventListener('click', () => game?.reset());
-document.getElementById('new-btn').addEventListener('click', () => {
-  const a = document.querySelector('.size-btn.active');
-  loadPuzzle(+a.dataset.rows, +a.dataset.cols, a.dataset.name, true);
+document.getElementById('zoom-in').addEventListener('click',()=>game?.zoomIn());
+document.getElementById('zoom-out').addEventListener('click',()=>game?.zoomOut());
+document.getElementById('zoom-fit').addEventListener('click',()=>game?.fitToScreen());
+document.getElementById('reset-btn').addEventListener('click',()=>game?.reset());
+document.getElementById('new-btn').addEventListener('click',()=>{
+  const a=document.querySelector('.size-btn.active');
+  loadPuzzle(+a.dataset.rows,+a.dataset.cols,a.dataset.name,true);
 });
-document.getElementById('win-next').addEventListener('click', () => {
+document.getElementById('win-next').addEventListener('click',()=>{
   document.getElementById('win-overlay').classList.remove('show');
-  const a = document.querySelector('.size-btn.active');
-  loadPuzzle(+a.dataset.rows, +a.dataset.cols, a.dataset.name, true);
+  const a=document.querySelector('.size-btn.active');
+  loadPuzzle(+a.dataset.rows,+a.dataset.cols,a.dataset.name,true);
 });
-document.getElementById('win-share').addEventListener('click', () => {
-  const elapsed = Math.floor((Date.now() - game.startTime) / 1000);
-  const a = document.querySelector('.size-btn.active');
-  const size = `${a.dataset.rows}×${a.dataset.cols}`;
-  const text = `⏱️ ${fmtTime(elapsed)} (${size})\nbist du schneller? 🧩 shikaku.ch`;
-  const waUrl = `https://wa.me/?text=${encodeURIComponent(text)}`;
-  if (navigator.share) navigator.share({text});
-  else window.open(waUrl, '_blank');
-});
-document.getElementById('win-close').addEventListener('click', () => document.getElementById('win-overlay').classList.remove('show'));
-document.getElementById('win-overlay').addEventListener('click', e => { if(e.target===e.currentTarget) e.currentTarget.classList.remove('show'); });
-window.addEventListener('resize', () => game?.resize());
+document.getElementById('win-close').addEventListener('click',()=>document.getElementById('win-overlay').classList.remove('show'));
+document.getElementById('win-overlay').addEventListener('click',e=>{if(e.target===e.currentTarget)e.currentTarget.classList.remove('show');});
+window.addEventListener('resize',()=>game?.resize());
 
-loadPuzzle(10, 10, 'Classic', false);
+loadPuzzle(10,10,'Classic',false);
 </script>
 </body>
 </html>
