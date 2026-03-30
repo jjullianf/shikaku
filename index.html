@@ -747,9 +747,15 @@ document.getElementById('reset-btn').addEventListener('click',()=>game.reset());
 function shareResult(){
   const elapsed=Math.floor((Date.now()-game.startTime)/1000);
   const text=game.solved
-    ? `I beat the daily Shikaku in ${fmtTime(elapsed)}. Can you do better? 🟨\nshikaku.ch`
-    : `四角 Daily Shikaku — ${MONTHS[now.getMonth()]} ${now.getDate()}\nPlay at shikaku.ch`;
-  if(navigator.share)navigator.share({text});else navigator.clipboard.writeText(text).then(()=>alert('Copied!'));
+    ? `⏱️ ${fmtTime(elapsed)}\nbist du schneller? 🧩 shikaku.ch`
+    : `🧩 shikaku.ch`;
+  const waUrl=`https://wa.me/?text=${encodeURIComponent(text)}`;
+  if(navigator.share){
+    navigator.share({text});
+  } else {
+    // Desktop: open WhatsApp Web directly
+    window.open(waUrl,'_blank');
+  }
 }
 document.getElementById('share-btn').addEventListener('click',shareResult);
 document.getElementById('win-share').addEventListener('click',shareResult);
