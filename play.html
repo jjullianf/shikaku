@@ -197,19 +197,22 @@ class ShikakuGame {
   }
 
   _applyZoom() {
-    const {rows, cols} = this.puzzle;
     const cw = this._naturalW;
     const ch = this._naturalH;
-    const scaledW = cw * this.zoom;
-    const scaledH = ch * this.zoom;
+    const scaledW = Math.round(cw * this.zoom);
+    const scaledH = Math.round(ch * this.zoom);
 
-    // Center if smaller than viewport
+    // Center if smaller than viewport using margin
     const padX = Math.max(0, Math.floor((this._vw - scaledW) / 2));
     const padY = Math.max(0, Math.floor((this._vh - scaledH) / 2));
-    this.canvas.style.transform = `translate(${padX}px, ${padY}px) scale(${this.zoom})`;
-    // Make scroll container content size match zoomed canvas
-    this.scroll.style.minWidth  = scaledW + padX * 2 + 'px';
-    this.scroll.style.minHeight = scaledH + padY * 2 + 'px';
+
+    // Resize canvas to match zoomed size — but use setTransform to avoid layout resize events
+    const dpr = window.devicePixelRatio || 1;
+    this.canvas.style.transform = '';
+    this.canvas.style.margin = `${padY}px ${padX}px`;
+    this.canvas.style.width  = scaledW + 'px';
+    this.canvas.style.height = scaledH + 'px';
+    // Canvas pixel buffer stays at natural size — CSS width/height scales it visually
     this._updateZoomLabel();
   }
 
@@ -218,10 +221,23 @@ class ShikakuGame {
     if (el) el.textContent = Math.round(this.zoom * 100) + '%';
   }
 
-  // Canvas-local px → puzzle cell (accounts for CSS zoom + padding)
+  // Event → canvas-local coords
+  // Since we use CSS width/height scaling (no transform), getBoundingClientRect
+  // gives the visual size. We must scale back to canvas pixel space.
+  _evPos(e, touch) {
+    const rect = this.canvas.getBoundingClientRect();
+    const src = touch || (e.touches ? e.touches[0] : e);
+    // rect.width = scaledW (CSS), canvas.width/dpr = naturalW
+    const scaleX = this._naturalW / rect.width;
+    const scaleY = this._naturalH / rect.height;
+    return {
+      x: (src.clientX - rect.left) * scaleX,
+      y: (src.clientY - rect.top)  * scaleY
+    };
+  }
+
+  // Canvas-local px → puzzle cell
   _canvasToCell(cx, cy) {
-    // cx/cy are already in canvas-element coordinates from getBoundingClientRect
-    // which accounts for CSS transform automatically
     const {rows, cols} = this.puzzle;
     const c = Math.floor(cx / BASE_CELL);
     const r = Math.floor(cy / BASE_CELL);
@@ -229,28 +245,19 @@ class ShikakuGame {
     return {r, c};
   }
 
-  // Event → canvas-local coords (accounts for CSS transform scale)
-  _evPos(e, touch) {
-    const rect = this.canvas.getBoundingClientRect();
-    const src = touch || (e.touches ? e.touches[0] : e);
-    // getBoundingClientRect gives scaled (CSS) coordinates.
-    // Divide by zoom to convert back to canvas pixel space.
-    return {
-      x: (src.clientX - rect.left) / this.zoom,
-      y: (src.clientY - rect.top)  / this.zoom
-    };
-  }
-
   // Zoom centered on a point in the scroll viewport
   _zoomTo(newZoom, vx, vy) {
     newZoom = Math.max(0.15, Math.min(8, newZoom));
-    // Keep point under (vx,vy) fixed
-    const worldX = (this.scroll.scrollLeft + vx) / this.zoom;
-    const worldY = (this.scroll.scrollTop  + vy) / this.zoom;
+    // World point under cursor (in natural canvas px)
+    const worldX = (this.scroll.scrollLeft + vx) * (this._naturalW / (this._naturalW * this.zoom));
+    const worldY = (this.scroll.scrollTop  + vy) * (this._naturalH / (this._naturalH * this.zoom));
     this.zoom = newZoom;
     this._applyZoom();
-    this.scroll.scrollLeft = worldX * this.zoom - vx;
-    this.scroll.scrollTop  = worldY * this.zoom - vy;
+    // Restore scroll so same world point stays under cursor
+    const scaledX = worldX * this.zoom * (1 / 1); // naturalW cancels
+    const scaledY = worldY * this.zoom * (1 / 1);
+    this.scroll.scrollLeft = scaledX - vx;
+    this.scroll.scrollTop  = scaledY - vy;
     this.render();
   }
 
