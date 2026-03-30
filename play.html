@@ -1,6 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-45EFHESZW4"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag("js", new Date());
+  gtag("config", "G-45EFHESZW4");
+</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <title>Shikaku — Play</title>
@@ -70,17 +78,11 @@ main{padding-top:56px;min-height:100vh}
 <nav>
   <a href="index.html" class="nav-logo">
     <svg class="nav-logo-icon" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg">
-      <!-- Black background -->
       <rect width="60" height="60" rx="6" fill="currentColor"/>
-      <!-- Row 1: wide rect spanning all 3 cols (area=3) -->
       <rect x="3" y="3" width="54" height="17" rx="3" fill="white"/>
-      <!-- Row 2-3 left: tall rect spanning 2 rows (area=2) -->
       <rect x="3" y="22" width="17" height="35" rx="3" fill="white"/>
-      <!-- Row 2 right 2 cols: wide rect (area=2) -->
       <rect x="22" y="22" width="35" height="17" rx="3" fill="white"/>
-      <!-- Row 3 middle: small square (area=1) -->
       <rect x="22" y="41" width="17" height="16" rx="3" fill="white"/>
-      <!-- Row 3 right: small square (area=1) -->
       <rect x="41" y="41" width="16" height="16" rx="3" fill="white"/>
     </svg>
     <span class="nav-logo-text"><span>shikaku</span></span>
