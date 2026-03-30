@@ -221,7 +221,7 @@ class ShikakuGame {
     // Canvas resolution matches physical pixels
     this.canvas.width = w * dpr;
     this.canvas.height = h * dpr;
-    this.ctx.scale(dpr, dpr);
+    this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     this._W = w;   // logical width
     this._H = h;   // logical height
   }
