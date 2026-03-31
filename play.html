@@ -131,546 +131,393 @@ main{padding-top:56px;min-height:100vh}
 </div>
 
 <script>
-// ── PUZZLE GENERATOR ────────────────────────────────────────────────────────
+// ── PUZZLE GENERATOR ──────────────────────────────────────────────────────────
 function mulberry32(seed){return function(){seed|=0;seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296};}
-function getDailySeed(){const d=new Date();return d.getFullYear()*10000+(d.getMonth()+1)*100+d.getDate();}
 function maxRectArea(rows,cols){const c=rows*cols;if(c<=25)return 6;if(c<=100)return 10;if(c<=400)return 16;return 20;}
 function generateSimplePuzzle(rows,cols,seed){const rng=mulberry32(seed),rects=[],grid=Array.from({length:rows},()=>new Array(cols).fill(-1)),clues=Array.from({length:rows},()=>new Array(cols).fill(0));for(let r=0;r<rows;r++){let c=0;while(c<cols){const w=(c+1<cols&&rng()>.5)?2:1,aw=Math.min(w,cols-c),id=rects.length,cc2=c+Math.floor(rng()*aw);rects.push({r1:r,c1:c,r2:r,c2:c+aw-1,clueR:r,clueC:cc2,area:aw});for(let x=c;x<c+aw;x++){grid[r][x]=id;clues[r][x]=0;}clues[r][cc2]=aw;c+=aw;}}return{rows,cols,clues,solution:rects,grid};}
 function generatePuzzle(rows,cols,seed){const rng=mulberry32(seed),maxArea=maxRectArea(rows,cols),grid=Array.from({length:rows},()=>new Array(cols).fill(-1)),rects=[];let attempts=0;while(true){let startR=-1,startC=-1;outer:for(let r=0;r<rows;r++)for(let c=0;c<cols;c++)if(grid[r][c]===-1){startR=r;startC=c;break outer;}if(startR===-1)break;let placed=false;const maxH=Math.min(rows-startR,maxArea),maxW=Math.min(cols-startC,maxArea),cands=[];for(let h=1;h<=maxH;h++)for(let w=1;w<=maxW;w++)if(h*w<=maxArea)cands.push([h,w]);for(let i=cands.length-1;i>0;i--){const j=Math.floor(rng()*(i+1));[cands[i],cands[j]]=[cands[j],cands[i]];}for(const[h,w]of cands){let fits=true;for(let r=startR;r<startR+h&&fits;r++)for(let c=startC;c<startC+w&&fits;c++)if(grid[r][c]!==-1)fits=false;if(!fits)continue;const id=rects.length,clueR=startR+Math.floor(rng()*h),clueC=startC+Math.floor(rng()*w);for(let r=startR;r<startR+h;r++)for(let c=startC;c<startC+w;c++)grid[r][c]=id;rects.push({r1:startR,c1:startC,r2:startR+h-1,c2:startC+w-1,clueR,clueC,area:h*w});placed=true;break;}if(!placed){attempts++;if(attempts>300)return generateSimplePuzzle(rows,cols,seed+attempts);for(let r=0;r<rows;r++)grid[r].fill(-1);rects.length=0;rng();rng();}}const clues=Array.from({length:rows},()=>new Array(cols).fill(0));for(const rect of rects)clues[rect.clueR][rect.clueC]=rect.area;return{rows,cols,clues,solution:rects,grid};}
 
-// ── GAME ENGINE ─────────────────────────────────────────────────────────────
-// Base cell size in puzzle-space pixels (canvas is always rendered at this resolution)
+// ── GAME ENGINE ──────────────────────────────────────────────────────────────
 const BASE_CELL = 52;
 
 class ShikakuGame {
   constructor(puzzle, canvas, scrollEl) {
-    this.puzzle = puzzle;
-    this.canvas = canvas;
-    this.scroll = scrollEl;
-    this.ctx = canvas.getContext('2d');
+    this.puzzle   = puzzle;
+    this.canvas   = canvas;
+    this.scroll   = scrollEl;
+    this.ctx      = canvas.getContext('2d');
     this.playerRects = [];
-    this.solved = false;
+    this.solved   = false;
     this.startTime = Date.now();
-    this.onSolve = null;
-    this.zoom = 1;
-
-    this.mode = 'idle';
+    this.onSolve  = null;
+    this.zoom     = 1;
+    this.mode     = 'idle';
     this.drawStart = null;
-    this.drawCurrent = null;
-    this.preview = null;
+    this.preview  = null;
     this.pointerMoved = false;
     this.pointerDownPos = null;
-
-    // AbortController lets us remove ALL event listeners at once when game is destroyed
-    this._abortController = new AbortController();
-
-    this._init();
-    this._bindEvents();
+    // Each game gets its own AbortController — destroy() removes all listeners instantly
+    this._ac = new AbortController();
+    this._setup();
+    this._bind();
     this.render();
   }
 
-  destroy() {
-    // Remove every event listener this game added
-    this._abortController.abort();
-  }
+  destroy() { this._ac.abort(); }
 
-  // ── Setup ──
-  _init() {
+  // ── Setup ──────────────────────────────────────────────────────────────────
+  _setup() {
     const dpr = window.devicePixelRatio || 1;
     const {rows, cols} = this.puzzle;
-    const vw = this.scroll.clientWidth || 912;
+    const vw = this.scroll.getBoundingClientRect().width || 912;
     const vh = Math.min(vw, window.innerHeight - 280);
     this.scroll.style.height = vh + 'px';
-    this._vw = vw;
-    this._vh = vh;
+    this._vw = vw; this._vh = vh;
 
-    // Canvas is always rendered at BASE_CELL resolution — never resized
-    // Zoom is applied via CSS transform only, so no resize events fire
-    const cw = cols * BASE_CELL;
-    const ch = rows * BASE_CELL;
+    // Canvas pixel buffer = natural puzzle size (never changes)
+    const cw = cols * BASE_CELL, ch = rows * BASE_CELL;
+    this._naturalW = cw; this._naturalH = ch;
     this.canvas.width  = cw * dpr;
     this.canvas.height = ch * dpr;
     this.canvas.style.width  = cw + 'px';
     this.canvas.style.height = ch + 'px';
-    this.canvas.style.transformOrigin = '0 0';
+    // IMPORTANT: setTransform must come after setting canvas.width (which resets context)
     this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    this._naturalW = cw;
-    this._naturalH = ch;
 
-    // Calculate fit zoom and apply via CSS
-    const fitZoom = Math.min(vw / cw, vh / ch) * 0.96;
-    this.zoom = fitZoom;
+    this.zoom = Math.min(vw / cw, vh / ch) * 0.96;
     this._applyZoom();
   }
 
   _applyZoom() {
-    const cw = this._naturalW;
-    const ch = this._naturalH;
-    const scaledW = Math.round(cw * this.zoom);
-    const scaledH = Math.round(ch * this.zoom);
-    const padX = Math.max(0, Math.floor((this._vw - scaledW) / 2));
-    const padY = Math.max(0, Math.floor((this._vh - scaledH) / 2));
-
-    // Only update DOM if values actually changed — prevents spurious resize events
-    const newW = scaledW + 'px', newH = scaledH + 'px';
-    const newM = `${padY}px ${padX}px`;
-    if (this.canvas.style.width !== newW)  this.canvas.style.width  = newW;
-    if (this.canvas.style.height !== newH) this.canvas.style.height = newH;
-    if (this.canvas.style.margin !== newM) this.canvas.style.margin = newM;
-    this.canvas.style.transform = '';
-    this._updateZoomLabel();
+    const sw = Math.round(this._naturalW * this.zoom);
+    const sh = Math.round(this._naturalH * this.zoom);
+    const px = Math.max(0, Math.floor((this._vw - sw) / 2));
+    const py = Math.max(0, Math.floor((this._vh - sh) / 2));
+    const w = sw + 'px', h = sh + 'px', m = py + 'px ' + px + 'px';
+    if (this.canvas.style.width  !== w) this.canvas.style.width  = w;
+    if (this.canvas.style.height !== h) this.canvas.style.height = h;
+    if (this.canvas.style.margin !== m) this.canvas.style.margin = m;
   }
 
-  _updateZoomLabel() {
-    const el = document.getElementById('zoom-level');
-    if (el) el.textContent = Math.round(this.zoom * 100) + '%';
+  resize() {
+    const vw = this.scroll.getBoundingClientRect().width || 912;
+    const vh = Math.min(vw, window.innerHeight - 280);
+    this.scroll.style.height = vh + 'px';
+    this._vw = vw; this._vh = vh;
+    this.zoom = Math.min(vw / this._naturalW, vh / this._naturalH) * 0.96;
+    this._applyZoom();
+    this.render();
   }
 
-  // Event → canvas-local coords
-  // Since we use CSS width/height scaling (no transform), getBoundingClientRect
-  // gives the visual size. We must scale back to canvas pixel space.
+  // ── Coords ─────────────────────────────────────────────────────────────────
   _evPos(e, touch) {
-    const rect = this.canvas.getBoundingClientRect();
-    const src = touch || (e.touches ? e.touches[0] : e);
-    // rect.width = scaledW (CSS), canvas.width/dpr = naturalW
-    const scaleX = this._naturalW / rect.width;
-    const scaleY = this._naturalH / rect.height;
+    const r = this.canvas.getBoundingClientRect();
+    const s = touch || (e.touches ? e.touches[0] : e);
+    // getBoundingClientRect reflects CSS size; scale back to canvas pixel space
     return {
-      x: (src.clientX - rect.left) * scaleX,
-      y: (src.clientY - rect.top)  * scaleY
+      x: (s.clientX - r.left) * (this._naturalW / r.width),
+      y: (s.clientY - r.top)  * (this._naturalH / r.height)
     };
   }
 
-  // Canvas-local px → puzzle cell
-  _canvasToCell(cx, cy) {
+  _cell(cx, cy) {
     const {rows, cols} = this.puzzle;
-    const c = Math.floor(cx / BASE_CELL);
-    const r = Math.floor(cy / BASE_CELL);
-    if (r < 0 || r >= rows || c < 0 || c >= cols) return null;
-    return {r, c};
+    const c = Math.floor(cx / BASE_CELL), r = Math.floor(cy / BASE_CELL);
+    return (r>=0 && r<rows && c>=0 && c<cols) ? {r,c} : null;
   }
 
-  // Zoom centered on a point in the scroll viewport
-  _zoomTo(newZoom, vx, vy) {
-    newZoom = Math.max(0.15, Math.min(8, newZoom));
-    // World point under cursor (in natural canvas px)
-    const worldX = (this.scroll.scrollLeft + vx) * (this._naturalW / (this._naturalW * this.zoom));
-    const worldY = (this.scroll.scrollTop  + vy) * (this._naturalH / (this._naturalH * this.zoom));
-    this.zoom = newZoom;
-    this._applyZoom();
-    // Restore scroll so same world point stays under cursor
-    const scaledX = worldX * this.zoom * (1 / 1); // naturalW cancels
-    const scaledY = worldY * this.zoom * (1 / 1);
-    this.scroll.scrollLeft = scaledX - vx;
-    this.scroll.scrollTop  = scaledY - vy;
-    this.render();
-  }
-
-  fitToScreen() {
-    const fitZoom = Math.min(this._vw / this._naturalW, this._vh / this._naturalH) * 0.96;
-    this.zoom = fitZoom;
-    this._applyZoom();
-    this.scroll.scrollLeft = 0;
-    this.scroll.scrollTop  = 0;
-    this.render();
-  }
-
-  zoomIn()  { this._zoomTo(this.zoom * 1.35, this._vw / 2, this._vh / 2); }
-  zoomOut() { this._zoomTo(this.zoom / 1.35, this._vw / 2, this._vh / 2); }
-
-  // ── Rect logic ──
-  _rectIsValid(p) {
-    const clues = this.puzzle.clues;
-    const area = (p.r2-p.r1+1)*(p.c2-p.c1+1);
+  // ── Rect logic ─────────────────────────────────────────────────────────────
+  _valid(p) {
+    const {clues} = this.puzzle, area = (p.r2-p.r1+1)*(p.c2-p.c1+1);
     let cnt=0, val=0;
     for(let r=p.r1;r<=p.r2;r++) for(let c=p.c1;c<=p.c2;c++) if(clues[r][c]>0){cnt++;val=clues[r][c];}
     return cnt===1 && val===area;
   }
 
-  _rectAt(r, c) {
-    return this.playerRects.find(p => p.r1<=r&&p.r2>=r&&p.c1<=c&&p.c2>=c) || null;
-  }
+  _rectAt(r,c) { return this.playerRects.find(p=>p.r1<=r&&p.r2>=r&&p.c1<=c&&p.c2>=c)||null; }
 
-  placeRect(r1,c1,r2,c2) {
+  place(r1,c1,r2,c2) {
     this.playerRects = this.playerRects.filter(p=>!(p.r1<=r2&&p.r2>=r1&&p.c1<=c2&&p.c2>=c1));
     this.playerRects.push({r1,c1,r2,c2});
     this.render();
-    this._checkSolution();
+    this._check();
   }
 
-  eraseAt(r,c) {
+  erase(r,c) {
     this.playerRects = this.playerRects.filter(p=>!(p.r1<=r&&p.r2>=r&&p.c1<=c&&p.c2>=c));
     this.render();
   }
 
-  _checkSolution() {
-    const {rows,cols,clues} = this.puzzle;
+  reset() { this.playerRects=[]; this.solved=false; this.mode='idle'; this.preview=null; this.render(); }
+
+  _check() {
+    const {rows,cols} = this.puzzle;
     const cov = Array.from({length:rows},()=>new Array(cols).fill(0));
     for(const p of this.playerRects) for(let r=p.r1;r<=p.r2;r++) for(let c=p.c1;c<=p.c2;c++) cov[r][c]++;
     for(let r=0;r<rows;r++) for(let c=0;c<cols;c++) if(cov[r][c]!==1) return;
-    for(const p of this.playerRects) if(!this._rectIsValid(p)) return;
-    this.solved = true;
-    this.render();
+    for(const p of this.playerRects) if(!this._valid(p)) return;
+    this.solved = true; this.render();
     if(this.onSolve) this.onSolve(Math.floor((Date.now()-this.startTime)/1000));
   }
 
-  reset() {
-    this.playerRects=[];this.solved=false;
-    // Do NOT reset startTime — timer keeps running
-    this.mode='idle';this.preview=null;this.render();
-  }
-
-  resize() {
-    const vw = this.scroll.clientWidth || 912;
-    const vh = Math.min(vw, window.innerHeight - 280);
-    this.scroll.style.height = vh + 'px';
-    this._vw = vw; this._vh = vh;
-    this.fitToScreen();
-  }
-
-  // ── Events ──
-  _bindEvents() {
-    const c = this.canvas;
-
-    // Mouse down
-  // ── Events ──
-  _bindEvents() {
-    const c = this.canvas;
-    const sig = { signal: this._abortController.signal };
+  // ── Events ─────────────────────────────────────────────────────────────────
+  _bind() {
+    const c = this.canvas, opt = {signal: this._ac.signal};
 
     c.addEventListener('mousedown', e => {
-      if (e.button !== 0 || this.solved) return;
-      const pos = this._evPos(e);
-      this.pointerDownPos = pos;
-      this.pointerMoved = false;
-      const cell = this._canvasToCell(pos.x, pos.y);
+      if (e.button!==0 || this.solved) return;
+      const pos = this._evPos(e), cell = this._cell(pos.x, pos.y);
       if (!cell) return;
       const ex = this._rectAt(cell.r, cell.c);
-      if (ex && !this._rectIsValid(ex)) { this.eraseAt(cell.r, cell.c); this.pointerDownPos=null; return; }
-      this.mode = 'draw';
-      this.drawStart = cell; this.drawCurrent = cell;
-      this.preview = {r1:cell.r,c1:cell.c,r2:cell.r,c2:cell.c};
+      if (ex && !this._valid(ex)) { this.erase(cell.r,cell.c); return; }
+      this.pointerMoved=false; this.pointerDownPos=pos;
+      this.mode='draw'; this.drawStart=cell;
+      this.preview={r1:cell.r,c1:cell.c,r2:cell.r,c2:cell.c};
       this.render();
-    }, sig);
+    }, opt);
 
     c.addEventListener('mousemove', e => {
-      if (this.mode !== 'draw') return;
+      if (this.mode!=='draw') return;
       const pos = this._evPos(e);
-      if (this.pointerDownPos && Math.hypot(pos.x-this.pointerDownPos.x, pos.y-this.pointerDownPos.y) > 4) this.pointerMoved = true;
-      const cell = this._canvasToCell(pos.x, pos.y);
+      if (this.pointerDownPos && Math.hypot(pos.x-this.pointerDownPos.x, pos.y-this.pointerDownPos.y)>4) this.pointerMoved=true;
+      const cell = this._cell(pos.x, pos.y);
       if (cell && this.drawStart) {
-        this.drawCurrent = cell;
-        this.preview = {r1:Math.min(this.drawStart.r,cell.r),c1:Math.min(this.drawStart.c,cell.c),r2:Math.max(this.drawStart.r,cell.r),c2:Math.max(this.drawStart.c,cell.c)};
+        this.preview={r1:Math.min(this.drawStart.r,cell.r),c1:Math.min(this.drawStart.c,cell.c),r2:Math.max(this.drawStart.r,cell.r),c2:Math.max(this.drawStart.c,cell.c)};
         this.render();
       }
-    }, sig);
+    }, opt);
 
-    c.addEventListener('mouseup', e => {
-      if (this.mode !== 'draw') return;
-      if (!this.pointerMoved && this.drawStart) {
-        const ex = this._rectAt(this.drawStart.r, this.drawStart.c);
-        if (ex) this.eraseAt(this.drawStart.r, this.drawStart.c);
-        else this.placeRect(this.drawStart.r, this.drawStart.c, this.drawStart.r, this.drawStart.c);
-      } else if (this.preview) {
-        this.placeRect(this.preview.r1, this.preview.c1, this.preview.r2, this.preview.c2);
-      }
-      this.mode='idle'; this.drawStart=null; this.drawCurrent=null; this.preview=null; this.pointerDownPos=null;
-      this.render();
-    }, sig);
+    // mouseup on canvas
+    c.addEventListener('mouseup', e => { this._finishDraw(); }, opt);
 
+    // mouseleave: just hide preview, actual placement via global mouseup
     c.addEventListener('mouseleave', e => {
-      if (this.mode === 'draw') { this.preview = null; this.render(); }
-    }, sig);
+      if (this.mode==='draw') { this.preview=null; this.render(); }
+    }, opt);
 
     c.addEventListener('contextmenu', e => {
       e.preventDefault();
-      const pos = this._evPos(e);
-      const cell = this._canvasToCell(pos.x, pos.y);
-      if (cell) this.eraseAt(cell.r, cell.c);
-    }, sig);
+      const pos=this._evPos(e), cell=this._cell(pos.x,pos.y);
+      if(cell) this.erase(cell.r,cell.c);
+    }, opt);
 
-    let lastTouches = null;
-
+    // Touch
+    let lastTouches=null;
     c.addEventListener('touchstart', e => {
       e.preventDefault();
-      const ts = e.touches;
-      if (ts.length === 1 && !this.solved) {
-        const pos = this._evPos(e, ts[0]);
-        this.pointerDownPos = pos;
-        this.pointerMoved = false;
-        const cell = this._canvasToCell(pos.x, pos.y);
-        if (!cell) return;
-        const ex = this._rectAt(cell.r, cell.c);
-        if (ex && !this._rectIsValid(ex)) { this.eraseAt(cell.r, cell.c); this.pointerDownPos=null; return; }
-        this.mode='draw'; this.drawStart=cell; this.drawCurrent=cell;
+      const ts=e.touches;
+      if (ts.length===1 && !this.solved) {
+        const pos=this._evPos(e,ts[0]), cell=this._cell(pos.x,pos.y);
+        if(!cell) return;
+        const ex=this._rectAt(cell.r,cell.c);
+        if(ex && !this._valid(ex)){this.erase(cell.r,cell.c);return;}
+        this.pointerMoved=false; this.pointerDownPos=pos;
+        this.mode='draw'; this.drawStart=cell;
         this.preview={r1:cell.r,c1:cell.c,r2:cell.r,c2:cell.c};
         this.render();
-      } else if (ts.length >= 2) {
+      } else if(ts.length>=2) {
         this.mode='idle'; this.preview=null; this.render();
         lastTouches=[{x:ts[0].clientX,y:ts[0].clientY},{x:ts[1].clientX,y:ts[1].clientY}];
       }
-    }, {passive:false, signal: this._abortController.signal});
+    }, {passive:false, signal:this._ac.signal});
 
     c.addEventListener('touchmove', e => {
       e.preventDefault();
-      const ts = e.touches;
-      if (ts.length >= 2) {
+      const ts=e.touches;
+      if(ts.length>=2) {
         const cur=[{x:ts[0].clientX,y:ts[0].clientY},{x:ts[1].clientX,y:ts[1].clientY}];
-        if (lastTouches) {
-          const rect = c.getBoundingClientRect();
+        if(lastTouches) {
+          const rect=c.getBoundingClientRect();
           const oldD=Math.hypot(lastTouches[0].x-lastTouches[1].x,lastTouches[0].y-lastTouches[1].y);
           const newD=Math.hypot(cur[0].x-cur[1].x,cur[0].y-cur[1].y);
-          const mx=(cur[0].x+cur[1].x)/2-rect.left, my=(cur[0].y+cur[1].y)/2-rect.top;
-          if (oldD>1) this._zoomTo(this.zoom*(newD/oldD), mx, my);
+          if(oldD>1){
+            const mx=(cur[0].x+cur[1].x)/2-rect.left, my=(cur[0].y+cur[1].y)/2-rect.top;
+            const nz=Math.max(0.15,Math.min(8,this.zoom*(newD/oldD)));
+            this.zoom=nz; this._applyZoom(); this.render();
+          }
         }
         lastTouches=cur; return;
       }
-      if (ts.length===1 && this.mode==='draw' && this.drawStart) {
+      if(ts.length===1 && this.mode==='draw' && this.drawStart) {
         const pos=this._evPos(e,ts[0]);
-        if (Math.hypot(pos.x-this.pointerDownPos.x,pos.y-this.pointerDownPos.y)>5) this.pointerMoved=true;
-        const cell=this._canvasToCell(pos.x,pos.y);
-        if (cell) {
-          this.drawCurrent=cell;
+        if(Math.hypot(pos.x-this.pointerDownPos.x,pos.y-this.pointerDownPos.y)>5) this.pointerMoved=true;
+        const cell=this._cell(pos.x,pos.y);
+        if(cell){
           this.preview={r1:Math.min(this.drawStart.r,cell.r),c1:Math.min(this.drawStart.c,cell.c),r2:Math.max(this.drawStart.r,cell.r),c2:Math.max(this.drawStart.c,cell.c)};
           this.render();
         }
       }
-    }, {passive:false, signal: this._abortController.signal});
+    }, {passive:false, signal:this._ac.signal});
 
     c.addEventListener('touchend', e => {
       e.preventDefault();
-      if (e.touches.length===0) {
-        if (this.mode==='draw' && this.drawStart) {
-          if (!this.pointerMoved) {
-            const ex=this._rectAt(this.drawStart.r,this.drawStart.c);
-            if (ex) this.eraseAt(this.drawStart.r,this.drawStart.c);
-            else this.placeRect(this.drawStart.r,this.drawStart.c,this.drawStart.r,this.drawStart.c);
-          } else if (this.preview) {
-            this.placeRect(this.preview.r1,this.preview.c1,this.preview.r2,this.preview.c2);
-          }
-        }
-        this.mode='idle'; this.drawStart=null; this.preview=null; this.pointerDownPos=null; lastTouches=null;
-        this.render();
-      } else if (e.touches.length===1) {
+      if(e.touches.length===0) {
+        this._finishDraw();
+        lastTouches=null;
+      } else if(e.touches.length===1) {
         this.mode='idle'; lastTouches=null;
       }
-    }, {passive:false, signal: this._abortController.signal});
+    }, {passive:false, signal:this._ac.signal});
   }
 
-  // ── Render ──
+  _finishDraw() {
+    if (this.mode!=='draw') return;
+    if (!this.pointerMoved && this.drawStart) {
+      const ex=this._rectAt(this.drawStart.r,this.drawStart.c);
+      if(ex) this.erase(this.drawStart.r,this.drawStart.c);
+      else this.place(this.drawStart.r,this.drawStart.c,this.drawStart.r,this.drawStart.c);
+    } else if(this.preview) {
+      this.place(this.preview.r1,this.preview.c1,this.preview.r2,this.preview.c2);
+    }
+    this.mode='idle'; this.drawStart=null; this.preview=null; this.pointerDownPos=null;
+    this.render();
+  }
+
+  // ── Render ─────────────────────────────────────────────────────────────────
   render() {
-    const ctx = this.ctx;
-    const {rows, cols, clues} = this.puzzle;
-    const cs = BASE_CELL;
-    const W = cols * cs;
-    const H = rows * cs;
-    const z = 1; // zoom is CSS-only, canvas renders at natural size
-    const dk = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const ctx=this.ctx, {rows,cols,clues}=this.puzzle, cs=BASE_CELL;
+    const W=cols*cs, H=rows*cs;
+    const dk=window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const C=dk?{bg:'#111110',grid:'rgba(255,255,255,0.07)',gridB:'rgba(255,255,255,0.2)',clue:'#f0ede0',rf:'rgba(180,160,100,0.16)',rs:'rgba(210,185,110,0.85)',ef:'rgba(200,70,70,0.13)',es:'rgba(220,80,80,0.7)',pf:'rgba(160,145,100,0.22)',ps:'rgba(200,180,100,0.6)',sf:'rgba(70,160,95,0.18)',ss:'rgba(70,190,110,0.85)'}:{bg:'#faf9f5',grid:'rgba(0,0,0,0.07)',gridB:'rgba(0,0,0,0.22)',clue:'#1a1916',rf:'rgba(130,105,35,0.1)',rs:'rgba(100,78,22,0.75)',ef:'rgba(195,55,55,0.09)',es:'rgba(195,55,55,0.65)',pf:'rgba(100,85,40,0.14)',ps:'rgba(100,78,22,0.5)',sf:'rgba(45,135,75,0.13)',ss:'rgba(45,135,75,0.7)'};
 
-    const C = dk ? {
-      bg:'#111110', grid:'rgba(255,255,255,0.07)', gridB:'rgba(255,255,255,0.2)',
-      clue:'#f0ede0', rf:'rgba(180,160,100,0.16)', rs:'rgba(210,185,110,0.85)',
-      ef:'rgba(200,70,70,0.13)', es:'rgba(220,80,80,0.7)',
-      pf:'rgba(160,145,100,0.22)', ps:'rgba(200,180,100,0.6)',
-      sf:'rgba(70,160,95,0.18)', ss:'rgba(70,190,110,0.85)',
-    } : {
-      bg:'#faf9f5', grid:'rgba(0,0,0,0.07)', gridB:'rgba(0,0,0,0.22)',
-      clue:'#1a1916', rf:'rgba(130,105,35,0.1)', rs:'rgba(100,78,22,0.75)',
-      ef:'rgba(195,55,55,0.09)', es:'rgba(195,55,55,0.65)',
-      pf:'rgba(100,85,40,0.14)', ps:'rgba(100,78,22,0.5)',
-      sf:'rgba(45,135,75,0.13)', ss:'rgba(45,135,75,0.7)',
-    };
-
-    ctx.clearRect(0, 0, W, H);
-    ctx.fillStyle = C.bg;
-    ctx.fillRect(0, 0, W, H);
-
-    ctx.save();
-    // No ctx.scale — canvas is always at 1:1, CSS transform handles zoom
+    ctx.clearRect(0,0,W,H);
+    ctx.fillStyle=C.bg; ctx.fillRect(0,0,W,H);
 
     // Player rects
-    for (const p of this.playerRects) {
-      const valid = this._rectIsValid(p);
-      const fill = this.solved ? C.sf : (valid ? C.rf : C.ef);
-      const stroke = this.solved ? C.ss : (valid ? C.rs : C.es);
+    for(const p of this.playerRects){
+      const v=this._valid(p), fill=this.solved?C.sf:(v?C.rf:C.ef), stroke=this.solved?C.ss:(v?C.rs:C.es);
       const x=p.c1*cs,y=p.r1*cs,w=(p.c2-p.c1+1)*cs,h=(p.r2-p.r1+1)*cs;
       ctx.fillStyle=fill; ctx.fillRect(x+1,y+1,w-2,h-2);
-      ctx.strokeStyle=stroke; ctx.lineWidth=2;
-      ctx.strokeRect(x+1.5,y+1.5,w-3,h-3);
+      ctx.strokeStyle=stroke; ctx.lineWidth=2; ctx.strokeRect(x+1.5,y+1.5,w-3,h-3);
     }
 
     // Preview
-    if (this.preview) {
-      const {r1,c1,r2,c2}=this.preview;
-      const x=c1*cs,y=r1*cs,w=(c2-c1+1)*cs,h=(r2-r1+1)*cs;
+    if(this.preview){
+      const {r1,c1,r2,c2}=this.preview, x=c1*cs,y=r1*cs,w=(c2-c1+1)*cs,h=(r2-r1+1)*cs;
       const area=(c2-c1+1)*(r2-r1+1);
       ctx.fillStyle=C.pf; ctx.fillRect(x,y,w,h);
       ctx.strokeStyle=C.ps; ctx.lineWidth=2;
-      ctx.setLineDash([5,3]);
-      ctx.strokeRect(x+1,y+1,w-2,h-2);
-      ctx.setLineDash([]);
-      // Area label
-      const lfs=Math.max(cs*0.55,14);
-      ctx.font=`700 ${lfs}px "DM Mono",monospace`;
-      const tw=ctx.measureText(String(area)).width;
-      const lx=x+w/2,ly=y+h/2,pad=lfs*0.3;
-      ctx.fillStyle=dk?'rgba(20,18,14,0.85)':'rgba(250,249,245,0.9)';
-      ctx.beginPath(); ctx.roundRect(lx-tw/2-pad,ly-lfs/2-pad*0.8,tw+pad*2,lfs+pad*1.6,4); ctx.fill();
-      ctx.fillStyle=dk?'#c4a565':'#7a6030';
-      ctx.textAlign='center'; ctx.textBaseline='middle';
+      ctx.setLineDash([5,3]); ctx.strokeRect(x+1,y+1,w-2,h-2); ctx.setLineDash([]);
+      const fs=Math.max(cs*0.55,14);
+      ctx.font='700 '+fs+'px "DM Mono",monospace';
+      const tw=ctx.measureText(String(area)).width, lx=x+w/2, ly=y+h/2, pad=fs*0.3;
+      ctx.fillStyle=dk?'rgba(20,18,14,0.85)":'rgba(250,249,245,0.9)';
+      ctx.beginPath(); ctx.roundRect(lx-tw/2-pad,ly-fs/2-pad*0.8,tw+pad*2,fs+pad*1.6,4); ctx.fill();
+      ctx.fillStyle=dk?'#c4a565':'#7a6030'; ctx.textAlign='center'; ctx.textBaseline='middle';
       ctx.fillText(String(area),lx,ly);
     }
 
-    // Grid lines
-    for(let r=0;r<=rows;r++){
-      ctx.strokeStyle=(r%5===0)?C.gridB:C.grid;
-      ctx.lineWidth=(r%5===0)?1:0.5;
-      ctx.beginPath(); ctx.moveTo(0,r*cs); ctx.lineTo(cols*cs,r*cs); ctx.stroke();
-    }
-    for(let c=0;c<=cols;c++){
-      ctx.strokeStyle=(c%5===0)?C.gridB:C.grid;
-      ctx.lineWidth=(c%5===0)?1:0.5;
-      ctx.beginPath(); ctx.moveTo(c*cs,0); ctx.lineTo(c*cs,rows*cs); ctx.stroke();
-    }
-    ctx.strokeStyle=C.gridB; ctx.lineWidth=2;
-    ctx.strokeRect(0,0,cols*cs,rows*cs);
+    // Grid
+    for(let r=0;r<=rows;r++){ctx.strokeStyle=(r%5===0)?C.gridB:C.grid;ctx.lineWidth=(r%5===0)?1:0.5;ctx.beginPath();ctx.moveTo(0,r*cs);ctx.lineTo(cols*cs,r*cs);ctx.stroke();}
+    for(let c=0;c<=cols;c++){ctx.strokeStyle=(c%5===0)?C.gridB:C.grid;ctx.lineWidth=(c%5===0)?1:0.5;ctx.beginPath();ctx.moveTo(c*cs,0);ctx.lineTo(c*cs,rows*cs);ctx.stroke();}
+    ctx.strokeStyle=C.gridB; ctx.lineWidth=2; ctx.strokeRect(0,0,cols*cs,rows*cs);
 
     // Clue numbers
     const fs=Math.round(cs*0.48);
-    ctx.font=`600 ${fs}px "DM Mono",monospace`;
-    ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillStyle=C.clue;
-    for(let r=0;r<rows;r++) for(let c=0;c<cols;c++)
-      if(clues[r][c]>0) ctx.fillText(clues[r][c],c*cs+cs/2,r*cs+cs/2);
-
-    ctx.restore();
+    ctx.font='600 '+fs+'px "DM Mono",monospace'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillStyle=C.clue;
+    for(let r=0;r<rows;r++) for(let c=0;c<cols;c++) if(clues[r][c]>0) ctx.fillText(clues[r][c],c*cs+cs/2,r*cs+cs/2);
   }
 }
 
 // ── PAGE LOGIC ───────────────────────────────────────────────────────────────
-let game = null, timerInterval = null, puzzleIndex = 1, solvedElapsed = 0;
-let currentPuzzle = null, currentName = 'Classic';
-function fmtTime(s){return `${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`;}
+let game=null, timerInterval=null, puzzleIndex=0, solvedElapsed=0;
+let currentPuzzle=null;
+function fmtTime(s){return Math.floor(s/60)+':'+String(s%60).padStart(2,'0');}
 
 function startGame(puzzle, name) {
-  // Destroy old game first — removes all its event listeners from the canvas
-  if (game) game.destroy();
+  if (game) game.destroy();       // remove old listeners — one game at a time
   currentPuzzle = puzzle;
-  currentName = name;
-  const canvas = document.getElementById('game-canvas');
-  const scroll = document.getElementById('canvas-scroll');
-  game = new ShikakuGame(puzzle, canvas, scroll);
+  game = new ShikakuGame(puzzle, document.getElementById('game-canvas'), document.getElementById('canvas-scroll'));
   document.getElementById('diff-badge').textContent = name;
-  document.getElementById('puzzle-counter').textContent = `Puzzle #${puzzleIndex}`;
+  document.getElementById('puzzle-counter').textContent = 'Puzzle #' + puzzleIndex;
   clearInterval(timerInterval);
   timerInterval = setInterval(()=>{
     document.getElementById('timer').textContent = fmtTime(Math.floor((Date.now()-game.startTime)/1000));
   }, 500);
   game.onSolve = elapsed => {
-    clearInterval(timerInterval);
-    timerInterval = null;
-    solvedElapsed = elapsed;
-    document.getElementById('timer').textContent = fmtTime(elapsed);
-    document.getElementById('win-time').textContent = fmtTime(elapsed);
-    document.getElementById('win-desc').textContent = `${puzzle.rows}×${puzzle.cols} puzzle solved`;
-    setTimeout(()=>document.getElementById('win-overlay').classList.add('show'), 600);
+    clearInterval(timerInterval); timerInterval=null;
+    solvedElapsed=elapsed;
+    document.getElementById('timer').textContent=fmtTime(elapsed);
+    document.getElementById('win-time').textContent=fmtTime(elapsed);
+    document.getElementById('win-desc').textContent=puzzle.rows+'×'+puzzle.cols+' puzzle solved';
+    setTimeout(()=>document.getElementById('win-overlay').classList.add('show'),600);
   };
 }
 
 function newPuzzle(rows, cols, name) {
-  // Only called on explicit user action — generates fresh seed
+  // ONLY called by explicit user button press — never called internally
   puzzleIndex++;
   const seed = Math.floor(Math.random()*1e9)+1;
   startGame(generatePuzzle(rows, cols, seed), name);
 }
 
-// ── Button protection ────────────────────────────────────────────────────────
-let _canvasDragging = false;
-document.getElementById('game-canvas').addEventListener('mousedown', () => {
-  _canvasDragging = true;
-}, {passive: true});
-document.addEventListener('mouseup', () => {
-  // If dragging was in progress and mouse released outside canvas, finalize the rect
-  if (_canvasDragging && game && game.mode === 'draw') {
-    if (game.preview) {
-      game.placeRect(game.preview.r1, game.preview.c1, game.preview.r2, game.preview.c2);
-    }
-    game.mode = 'idle';
-    game.drawStart = null;
-    game.drawCurrent = null;
-    game.preview = null;
-    game.pointerDownPos = null;
-    game.render();
-  }
-  // Keep flag true for 300ms so any click event that fires after mouseup is still blocked
-  setTimeout(() => { _canvasDragging = false; }, 300);
-}, {passive: true});
+// ── Button guard — blocks buttons when mouse was pressed on canvas ───────────
+let _dragging = false;
+document.getElementById('game-canvas').addEventListener('mousedown', ()=>{ _dragging=true; }, {passive:true});
+document.addEventListener('mouseup', ()=>{
+  if (_dragging && game && game.mode==='draw') game._finishDraw();
+  setTimeout(()=>{ _dragging=false; }, 300);
+}, {passive:true});
 
-function guardedClick(fn) {
-  return (e) => {
-    if (_canvasDragging) { e.preventDefault(); e.stopPropagation(); return; }
-    fn();
-  };
-}
+function guarded(fn){ return e=>{ if(_dragging){e.preventDefault();e.stopPropagation();return;} fn(); }; }
 
-document.getElementById('reset-btn').addEventListener('mousedown', (e) => { if(_canvasDragging) e.preventDefault(); });
-document.getElementById('reset-btn').addEventListener('click', guardedClick(() => game?.reset()));
-
-document.getElementById('new-btn').addEventListener('mousedown', (e) => { if(_canvasDragging) e.preventDefault(); });
-document.getElementById('new-btn').addEventListener('click', guardedClick(() => {
-  const a = document.querySelector('.size-btn.active');
-  newPuzzle(+a.dataset.rows, +a.dataset.cols, a.dataset.name);
+// Reset & New buttons
+document.getElementById('reset-btn').addEventListener('mousedown', e=>{ if(_dragging) e.preventDefault(); });
+document.getElementById('reset-btn').addEventListener('click', guarded(()=>game&&game.reset()));
+document.getElementById('new-btn').addEventListener('mousedown', e=>{ if(_dragging) e.preventDefault(); });
+document.getElementById('new-btn').addEventListener('click', guarded(()=>{
+  const a=document.querySelector('.size-btn.active');
+  newPuzzle(+a.dataset.rows,+a.dataset.cols,a.dataset.name);
 }));
 
-document.querySelectorAll('.size-btn').forEach(btn => {
-  btn.addEventListener('mousedown', (e) => { if(_canvasDragging) e.preventDefault(); });
-  btn.addEventListener('click', guardedClick(() => {
-    document.querySelectorAll('.size-btn').forEach(b => b.classList.remove('active'));
+// Size buttons
+document.querySelectorAll('.size-btn').forEach(btn=>{
+  btn.addEventListener('mousedown', e=>{ if(_dragging) e.preventDefault(); });
+  btn.addEventListener('click', guarded(()=>{
+    document.querySelectorAll('.size-btn').forEach(b=>b.classList.remove('active'));
     btn.classList.add('active');
-    puzzleIndex = 0;
-    newPuzzle(+btn.dataset.rows, +btn.dataset.cols, btn.dataset.name);
+    puzzleIndex=0;
+    newPuzzle(+btn.dataset.rows,+btn.dataset.cols,btn.dataset.name);
   }));
 });
 
-document.getElementById('win-next').addEventListener('click', () => {
-  _canvasDragging = false;
+// Win overlay
+document.getElementById('win-next').addEventListener('click',()=>{
+  _dragging=false;
   document.getElementById('win-overlay').classList.remove('show');
-  const a = document.querySelector('.size-btn.active');
-  newPuzzle(+a.dataset.rows, +a.dataset.cols, a.dataset.name);
+  const a=document.querySelector('.size-btn.active');
+  newPuzzle(+a.dataset.rows,+a.dataset.cols,a.dataset.name);
 });
-document.getElementById('win-close').addEventListener('click', () => {
-  _canvasDragging = false;
+document.getElementById('win-close').addEventListener('click',()=>{
+  _dragging=false;
   document.getElementById('win-overlay').classList.remove('show');
 });
-document.getElementById('win-overlay').addEventListener('click', e => {
-  if (e.target === e.currentTarget) {
-    _canvasDragging = false;
-    e.currentTarget.classList.remove('show');
-  }
+document.getElementById('win-overlay').addEventListener('click',e=>{
+  if(e.target===e.currentTarget){ _dragging=false; e.currentTarget.classList.remove('show'); }
 });
 
-function shareResult(elapsed) {
-  const p = currentPuzzle;
-  const text = `⏱️ ${fmtTime(elapsed)}\nI solved a ${p.rows}×${p.cols} Shikaku — can you beat that? 🧩 shikaku.ch`;
-  const waUrl = `https://wa.me/?text=${encodeURIComponent(text)}`;
-  if (navigator.share) navigator.share({text});
-  else window.open(waUrl, '_blank');
-}
-document.getElementById('win-share').addEventListener('click', () => shareResult(solvedElapsed));
-
-let resizeTimer = null;
-let lastWindowW = window.innerWidth;
-let lastWindowH = window.innerHeight;
-window.addEventListener('resize', () => {
-  if (window.innerWidth === lastWindowW && window.innerHeight === lastWindowH) return;
-  lastWindowW = window.innerWidth;
-  lastWindowH = window.innerHeight;
-  clearTimeout(resizeTimer);
-  resizeTimer = setTimeout(() => game?.resize(), 200);
+// Share
+document.getElementById('win-share').addEventListener('click',()=>{
+  const p=currentPuzzle;
+  const text='⏱️ '+fmtTime(solvedElapsed)+'\nI solved a '+p.rows+'×'+p.cols+' Shikaku — can you beat that? 🧩 shikaku.ch';
+  if(navigator.share) navigator.share({text});
+  else window.open('https://wa.me/?text='+encodeURIComponent(text),'_blank');
 });
 
-// Initial load
-const _initSeed = Math.floor(Math.random()*1e9)+1;
-startGame(generatePuzzle(10, 10, _initSeed), 'Classic');
+// Resize (only on real window size change)
+let _rTimer=null, _rW=window.innerWidth, _rH=window.innerHeight;
+window.addEventListener('resize',()=>{
+  if(window.innerWidth===_rW && window.innerHeight===_rH) return;
+  _rW=window.innerWidth; _rH=window.innerHeight;
+  clearTimeout(_rTimer); _rTimer=setTimeout(()=>game&&game.resize(),200);
+});
+
+// Initial load — wait for layout so getBoundingClientRect returns real dimensions
+window.addEventListener('load', ()=>{
+  puzzleIndex=1;
+  const seed=Math.floor(Math.random()*1e9)+1;
+  startGame(generatePuzzle(10,10,seed),'Classic');
+});
 </script>
 </body>
 </html>
