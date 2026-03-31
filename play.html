@@ -401,7 +401,7 @@ class ShikakuGame {
       const fs=Math.max(cs*0.55,14);
       ctx.font='700 '+fs+'px "DM Mono",monospace';
       const tw=ctx.measureText(String(area)).width, lx=x+w/2, ly=y+h/2, pad=fs*0.3;
-      ctx.fillStyle=dk?'rgba(20,18,14,0.85)":'rgba(250,249,245,0.9)';
+      ctx.fillStyle=dk?'rgba(20,18,14,0.85)':'rgba(250,249,245,0.9)';
       ctx.beginPath(); ctx.roundRect(lx-tw/2-pad,ly-fs/2-pad*0.8,tw+pad*2,fs+pad*1.6,4); ctx.fill();
       ctx.fillStyle=dk?'#c4a565':'#7a6030'; ctx.textAlign='center'; ctx.textBaseline='middle';
       ctx.fillText(String(area),lx,ly);
