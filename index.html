@@ -9,6 +9,8 @@
   gtag("js", new Date());
   gtag("config", "G-45EFHESZW4");
 </script>
+<!-- Google AdSense -->
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1892773925409513" crossorigin="anonymous"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <title>Shikaku — Daily Puzzle</title>
@@ -785,7 +787,12 @@ document.getElementById('win-share').addEventListener('click',shareResult);
 document.getElementById('win-overlay').addEventListener('click',e=>{if(e.target===e.currentTarget)e.currentTarget.classList.remove('show');});
 function updateCountdown(){const n=new Date(),t=new Date(n);t.setDate(t.getDate()+1);t.setHours(0,0,0,0);const d=Math.floor((t-n)/1000),h=Math.floor(d/3600),m=Math.floor((d%3600)/60),s=d%60;document.getElementById('countdown').textContent=`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;}
 updateCountdown();setInterval(updateCountdown,1000);
-window.addEventListener('resize',()=>game.resize());
+let _lastW=window.innerWidth,_lastH=window.innerHeight;
+window.addEventListener('resize',()=>{
+  if(window.innerWidth===_lastW&&window.innerHeight===_lastH)return;
+  _lastW=window.innerWidth;_lastH=window.innerHeight;
+  game.resize();
+});
 </script>
 </body>
 </html>
