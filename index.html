@@ -195,7 +195,80 @@ main{padding-top:56px;min-height:100vh}
 // ── PUZZLE GENERATOR ────────────────────────────────────────────────────────
 function mulberry32(seed){return function(){seed|=0;seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296};}
 function maxRectArea(rows,cols){const c=rows*cols;if(c<=25)return 6;if(c<=100)return 10;if(c<=400)return 32;return 52;}
-function generateSimplePuzzle(rows,cols,seed){const rng=mulberry32(seed),rects=[],grid=Array.from({length:rows},()=>new Array(cols).fill(-1)),clues=Array.from({length:rows},()=>new Array(cols).fill(0));for(let r=0;r<rows;r++){let c=0;while(c<cols){const w=(c+1<cols&&rng()>.5)?2:1,aw=Math.min(w,cols-c),id=rects.length,cc2=c+Math.floor(rng()*aw);rects.push({r1:r,c1:c,r2:r,c2:c+aw-1,clueR:r,clueC:cc2,area:aw});for(let x=c;x<c+aw;x++){grid[r][x]=id;clues[r][x]=0;}clues[r][cc2]=aw;c+=aw;}}return{rows,cols,clues,solution:rects,grid};}
+function generateSimplePuzzle(rows,cols,seed){
+  // Fallback: simple row-by-row, min area 2
+  const rng=mulberry32(seed),rects=[],grid=Array.from({length:rows},()=>new Array(cols).fill(-1)),clues=Array.from({length:rows},()=>new Array(cols).fill(0));
+  for(let r=0;r<rows;r++){
+    let c=0;
+    while(c<cols){
+      const remaining=cols-c;
+      const w=(remaining>=2&&rng()>.4)?2:Math.min(remaining,2);
+      const aw=Math.min(w,cols-c);
+      const id=rects.length,cc2=c+Math.floor(rng()*aw);
+      rects.push({r1:r,c1:c,r2:r,c2:c+aw-1,clueR:r,clueC:cc2,area:aw});
+      for(let x=c;x<c+aw;x++){grid[r][x]=id;clues[r][x]=0;}
+      clues[r][cc2]=aw;c+=aw;
+    }
+  }
+  return{rows,cols,clues,solution:rects,grid};
+}
+function generatePuzzle(rows,cols,seed){
+  const rng=mulberry32(seed),maxArea=maxRectArea(rows,cols),minArea=2;
+  let grid,rects,attempts=0;
+  function tryBuild(){
+    grid=Array.from({length:rows},()=>new Array(cols).fill(-1));
+    rects=[];
+    while(true){
+      // Always find the first empty cell (top-left scan — reliable)
+      let startR=-1,startC=-1;
+      outer:for(let r=0;r<rows;r++)for(let c=0;c<cols;c++)if(grid[r][c]===-1){startR=r;startC=c;break outer;}
+      if(startR===-1)break; // all filled
+
+      // Count how many empty cells remain to know if we can still enforce minArea
+      let emptyCells=0;
+      for(let r=0;r<rows;r++)for(let c=0;c<cols;c++)if(grid[r][c]===-1)emptyCells++;
+      const canEnforceMin=emptyCells>1;
+
+      const maxH=Math.min(rows-startR,maxArea);
+      const maxW=Math.min(cols-startC,maxArea);
+      const cands=[];
+      for(let h=1;h<=maxH;h++)for(let w=1;w<=maxW;w++){
+        const area=h*w;
+        if(area>maxArea)continue;
+        if(canEnforceMin&&area<minArea)continue; // skip 1x1 unless forced
+        cands.push([h,w]);
+      }
+      // If no candidates (e.g. single isolated cell) allow 1x1 as last resort
+      if(cands.length===0)cands.push([1,1]);
+      // Shuffle
+      for(let i=cands.length-1;i>0;i--){const j=Math.floor(rng()*(i+1));[cands[i],cands[j]]=[cands[j],cands[i]];}
+      let placed=false;
+      for(const[h,w]of cands){
+        let fits=true;
+        for(let r=startR;r<startR+h&&fits;r++)for(let c=startC;c<startC+w&&fits;c++)if(grid[r][c]!==-1)fits=false;
+        if(!fits)continue;
+        const id=rects.length;
+        const clueR=startR+Math.floor(rng()*h);
+        const clueC=startC+Math.floor(rng()*w);
+        for(let r=startR;r<startR+h;r++)for(let c=startC;c<startC+w;c++)grid[r][c]=id;
+        rects.push({r1:startR,c1:startC,r2:startR+h-1,c2:startC+w-1,clueR,clueC,area:h*w});
+        placed=true;break;
+      }
+      if(!placed)return false;
+    }
+    return true;
+  }
+  while(attempts<300){
+    if(tryBuild())break;
+    attempts++;
+    // Burn rng values so next attempt gets different results
+    for(let i=0;i<attempts*2;i++)rng();
+  }
+  if(attempts>=300)return generateSimplePuzzle(rows,cols,seed+attempts);
+  const clues=Array.from({length:rows},()=>new Array(cols).fill(0));
+  for(const rect of rects)clues[rect.clueR][rect.clueC]=rect.area;
+  return{rows,cols,clues,solution:rects,grid};
+}
 function generatePuzzle(rows,cols,seed){
   const rng=mulberry32(seed),maxArea=maxRectArea(rows,cols);
   let grid,rects,attempts=0;
