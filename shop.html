@@ -14,7 +14,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Shikaku — Shop</title>
-<meta name="description" content="A handcrafted book of Shikaku puzzles. Coming soon.">
+<meta name="description" content="A pocket-sized book of 120 Shikaku puzzles across four difficulty levels. A5 softcover, ships worldwide. Coming soon from shikaku.ch.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Noto+Serif+JP:wght@300;400&display=swap">
 <style>
@@ -75,7 +75,20 @@ main{padding-top:56px;min-height:100vh}.page{max-width:720px;margin:0 auto;paddi
 @keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
 .page>*{animation:fadeUp .35s ease both}
 .page>*:nth-child(1){animation-delay:.0s}.page>*:nth-child(2){animation-delay:.05s}.page>*:nth-child(3){animation-delay:.1s}.page>*:nth-child(4){animation-delay:.15s}.page>*:nth-child(5){animation-delay:.2s}
-@media(max-width:560px){nav{padding:0 16px}.nav-links{gap:18px}.page{padding:28px 16px 60px}.shop-hero{flex-direction:column;align-items:center}}
+.content-section{margin-bottom:8px}
+.section-title{font-family:'Noto Serif JP',serif;font-weight:300;font-size:1.1rem;letter-spacing:.08em;margin-bottom:16px;color:var(--ink)}
+.section-text{font-size:.8rem;color:var(--ink2);line-height:1.85;letter-spacing:.03em;margin-bottom:12px}
+.features-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;margin-top:8px}
+.feature-card{background:var(--paper2);border:1px solid var(--border);border-radius:var(--r);padding:20px}
+.feature-num{font-size:2rem;font-weight:300;color:var(--gold);line-height:1;margin-bottom:4px}
+.feature-label{font-size:.72rem;font-weight:500;color:var(--ink);letter-spacing:.06em;text-transform:uppercase;margin-bottom:8px}
+.feature-desc{font-size:.74rem;color:var(--ink3);line-height:1.7;letter-spacing:.03em}
+.faq-list{display:flex;flex-direction:column;gap:0}
+.faq-item{border-bottom:1px solid var(--border);padding:18px 0}
+.faq-item:first-child{border-top:1px solid var(--border)}
+.faq-q{font-size:.8rem;font-weight:500;color:var(--ink);letter-spacing:.04em;margin-bottom:8px}
+.faq-a{font-size:.78rem;color:var(--ink2);line-height:1.75;letter-spacing:.03em}
+@media(max-width:560px){nav{padding:0 16px}.nav-links{gap:18px}.page{padding:28px 16px 60px}.shop-hero{flex-direction:column;align-items:center}.features-grid{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -108,12 +121,12 @@ main{padding-top:56px;min-height:100vh}.page{max-width:720px;margin:0 auto;paddi
   <div class="page-header">
     <div class="badge">Coming soon</div>
     <h1>The Shikaku Book</h1>
-    <p>A curated collection of hand-crafted puzzles</p>
+    <p>120 puzzles · A5 softcover · Ships worldwide</p>
   </div>
 
   <div class="coming-soon-strip">
     <span class="dot"></span>
-    The book is currently in production — be the first to know when it launches
+    Currently in production — check back soon for the launch date
   </div>
 
   <div class="shop-hero">
@@ -123,16 +136,52 @@ main{padding-top:56px;min-height:100vh}.page{max-width:720px;margin:0 auto;paddi
     </div>
     <div class="book-info">
       <h2>Shikaku: A Book of Puzzles</h2>
-      <div class="price">Coming soon <small>· Price TBA</small></div>
-      <p>A carefully designed puzzle book featuring 120 Shikaku puzzles across four difficulty levels. From a gentle 5×5 warm-up to demanding 25×25 challenges — printed on quality paper, perfect for quiet mornings or long journeys.</p>
+      <div class="price">CHF 15–25 <small>· exact price TBA</small></div>
+      <p>120 hand-crafted Shikaku puzzles in a compact A5 softcover. Four difficulty levels, clean print design, and full solutions at the back. Quiet enough for a commute, satisfying enough for an afternoon.</p>
       <ul class="book-features">
         <li>120 puzzles — 30 per difficulty level</li>
-        <li>5×5 · 10×10 · 20×20 · 25×25 grids</li>
-        <li>Full solutions at the back</li>
-        <li>Clean, minimal print design</li>
-        <li>Perfect-bound softcover, A5 format</li>
+        <li>5×5 Starter · 10×10 Classic · 20×20 Hard · 25×25 Expert</li>
+        <li>A5 format — fits in a jacket pocket</li>
+        <li>Perfect-bound softcover, quality paper</li>
+        <li>Full solutions included at the back</li>
+        <li>Ships worldwide</li>
       </ul>
+    </div>
+  </div>
 
+  <hr class="divider">
+
+  <div class="content-section">
+    <h2 class="section-title">Why a physical puzzle book?</h2>
+    <p class="section-text">There is something different about solving a puzzle on paper. No screen, no notifications, no battery to worry about. Just a pencil and a grid. Shikaku is one of those puzzles that works particularly well in print — the logic is visual, the rules are simple, and a solved page feels genuinely satisfying to look at.</p>
+    <p class="section-text">The book is designed to be picked up and put down. Each puzzle fits on its own page with plenty of space to work in. Whether you are commuting, travelling, or just looking for something to do with your hands, it is the kind of book that earns a spot in a bag.</p>
+  </div>
+
+  <hr class="divider">
+
+  <div class="content-section">
+    <h2 class="section-title">What's inside</h2>
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feature-num">30</div>
+        <div class="feature-label">Starter puzzles</div>
+        <div class="feature-desc">5×5 grids — ideal for beginners or a quick warm-up. Solvable in under a minute once you know the rules.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-num">30</div>
+        <div class="feature-label">Classic puzzles</div>
+        <div class="feature-desc">10×10 grids — the sweet spot. Enough complexity to be interesting, small enough to finish in one sitting.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-num">30</div>
+        <div class="feature-label">Hard puzzles</div>
+        <div class="feature-desc">20×20 grids — a proper challenge. Requires patience and a systematic approach.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-num">30</div>
+        <div class="feature-label">Expert puzzles</div>
+        <div class="feature-desc">25×25 grids — the full experience. These take time, but finishing one is genuinely rewarding.</div>
+      </div>
     </div>
   </div>
 
@@ -140,9 +189,38 @@ main{padding-top:56px;min-height:100vh}.page{max-width:720px;margin:0 auto;paddi
 
   <div class="preview-section">
     <h3>Sample puzzles from the book</h3>
-    <p>Each puzzle is uniquely generated and tested for a clean, satisfying solve</p>
+    <p>Shown solved — in the book each puzzle starts blank</p>
     <div class="sample-grid" id="sample-grid"></div>
   </div>
+
+  <hr class="divider">
+
+  <div class="content-section">
+    <h2 class="section-title">Frequently asked questions</h2>
+    <div class="faq-list">
+      <div class="faq-item">
+        <div class="faq-q">When will the book be available?</div>
+        <div class="faq-a">The book is currently in production. No exact date yet — check back on this page or visit the site regularly for updates.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">How much will it cost?</div>
+        <div class="faq-a">The price will be in the CHF 15–25 range. Exact pricing will be confirmed at launch.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">Do you ship internationally?</div>
+        <div class="faq-a">Yes — the book will ship worldwide. Shipping costs will vary by destination and will be shown at checkout.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">Do I need to know Shikaku to enjoy the book?</div>
+        <div class="faq-a">Not at all. The rules are explained at the start of the book. The Starter section is designed for complete beginners.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">Is it suitable as a gift?</div>
+        <div class="faq-a">Yes — it makes a great gift for anyone who enjoys logic puzzles, Sudoku, or quiet focused activities. The minimal design means it looks good on a shelf too.</div>
+      </div>
+    </div>
+  </div>
+
 </div></main>
 
 <script>
