@@ -21,7 +21,14 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;background:var(--paper);bord
 .nav-links a{font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;color:var(--ink2);text-decoration:none;transition:color var(--t)}
 .nav-links a:hover,.nav-links a.active{color:var(--gold)}
 main{padding-top:56px;min-height:100vh}
-.page{max-width:960px;margin:0 auto;padding:40px 24px 80px}
+.page{max-width:1320px;margin:0 auto;padding:40px 24px 80px}
+/* Wide layout for sidebar ads */
+.game-with-ads{display:flex;align-items:flex-start;justify-content:center;gap:0;width:100%}
+.ad-sidebar{width:160px;flex-shrink:0;padding-top:8px;display:none}
+.ad-sidebar-left{margin-right:16px}
+.ad-sidebar-right{margin-left:16px}
+@media(min-width:1280px){.ad-sidebar{display:block}}
+.game-col{flex:1;min-width:0;max-width:960px}
 .page-header{text-align:center;margin-bottom:32px}
 .page-header h1{font-family:'Noto Serif JP',serif;font-weight:300;font-size:1.6rem;letter-spacing:.08em;margin-bottom:8px}
 .page-header p{font-size:.78rem;color:var(--ink3);letter-spacing:.06em}
@@ -97,6 +104,17 @@ main{padding-top:56px;min-height:100vh}
     <div class="size-option"><button class="size-btn" data-rows="20" data-cols="20" data-name="Hard">20 × 20</button><small>Hard</small></div>
     <div class="size-option"><button class="size-btn" data-rows="25" data-cols="25" data-name="Expert">25 × 25</button><small>Expert</small></div>
   </div>
+  <div class="game-with-ads">
+    <!-- Left sidebar ad -->
+    <div class="ad-sidebar ad-sidebar-left">
+      <ins class="adsbygoogle"
+           style="display:block;width:160px;height:600px"
+           data-ad-client="ca-pub-1892773925409513"
+           data-ad-slot="5373273492"></ins>
+      <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+    </div>
+
+    <div class="game-col">
   <div class="game-area">
     <div class="game-meta">
       <span id="diff-badge">Classic</span>
@@ -113,6 +131,17 @@ main{padding-top:56px;min-height:100vh}
       <button class="btn btn-primary" id="new-btn">→ New</button>
     </div>
     <p class="game-hint">Drag to draw · Click to place 1 · Right-click or click existing to erase</p>
+  </div>
+    </div>
+
+    <!-- Right sidebar ad -->
+    <div class="ad-sidebar ad-sidebar-right">
+      <ins class="adsbygoogle"
+           style="display:block;width:160px;height:600px"
+           data-ad-client="ca-pub-1892773925409513"
+           data-ad-slot="4161203521"></ins>
+      <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+    </div>
   </div>
 </div></main>
 
