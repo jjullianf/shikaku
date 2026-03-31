@@ -367,9 +367,13 @@ class ShikakuGame {
       this.render();
     });
 
+    // mouseleave: just cancel the preview visually, do NOT place rect
+    // Placement happens on mouseup (which fires even outside the canvas)
     c.addEventListener('mouseleave', e => {
-      if (this.mode==='draw' && this.preview) this.placeRect(this.preview.r1,this.preview.c1,this.preview.r2,this.preview.c2);
-      this.mode='idle'; this.drawStart=null; this.preview=null; this.render();
+      if (this.mode === 'draw') {
+        this.preview = null;
+        this.render();
+      }
     });
 
     c.addEventListener('contextmenu', e => {
@@ -579,7 +583,20 @@ document.getElementById('game-canvas').addEventListener('mousedown', () => {
   _canvasDragging = true;
 }, {passive: true});
 document.addEventListener('mouseup', () => {
-  setTimeout(() => { _canvasDragging = false; }, 50);
+  // If dragging was in progress and mouse released outside canvas, finalize the rect
+  if (_canvasDragging && game && game.mode === 'draw') {
+    if (game.preview) {
+      game.placeRect(game.preview.r1, game.preview.c1, game.preview.r2, game.preview.c2);
+    }
+    game.mode = 'idle';
+    game.drawStart = null;
+    game.drawCurrent = null;
+    game.preview = null;
+    game.pointerDownPos = null;
+    game.render();
+  }
+  // Keep flag true for 300ms so any click event that fires after mouseup is still blocked
+  setTimeout(() => { _canvasDragging = false; }, 300);
 }, {passive: true});
 
 function guardedClick(fn) {
