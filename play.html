@@ -146,7 +146,7 @@ class ShikakuGame {
   constructor(puzzle, canvas, scrollEl) {
     this.puzzle = puzzle;
     this.canvas = canvas;
-    this.scroll = scrollEl; // the scrollable div
+    this.scroll = scrollEl;
     this.ctx = canvas.getContext('2d');
     this.playerRects = [];
     this.solved = false;
@@ -154,7 +154,6 @@ class ShikakuGame {
     this.onSolve = null;
     this.zoom = 1;
 
-    // Interaction
     this.mode = 'idle';
     this.drawStart = null;
     this.drawCurrent = null;
@@ -162,9 +161,17 @@ class ShikakuGame {
     this.pointerMoved = false;
     this.pointerDownPos = null;
 
+    // AbortController lets us remove ALL event listeners at once when game is destroyed
+    this._abortController = new AbortController();
+
     this._init();
     this._bindEvents();
     this.render();
+  }
+
+  destroy() {
+    // Remove every event listener this game added
+    this._abortController.abort();
   }
 
   // ── Setup ──
@@ -326,6 +333,11 @@ class ShikakuGame {
     const c = this.canvas;
 
     // Mouse down
+  // ── Events ──
+  _bindEvents() {
+    const c = this.canvas;
+    const sig = { signal: this._abortController.signal };
+
     c.addEventListener('mousedown', e => {
       if (e.button !== 0 || this.solved) return;
       const pos = this._evPos(e);
@@ -333,14 +345,13 @@ class ShikakuGame {
       this.pointerMoved = false;
       const cell = this._canvasToCell(pos.x, pos.y);
       if (!cell) return;
-      // Click on invalid rect → erase immediately
       const ex = this._rectAt(cell.r, cell.c);
       if (ex && !this._rectIsValid(ex)) { this.eraseAt(cell.r, cell.c); this.pointerDownPos=null; return; }
       this.mode = 'draw';
       this.drawStart = cell; this.drawCurrent = cell;
       this.preview = {r1:cell.r,c1:cell.c,r2:cell.r,c2:cell.c};
       this.render();
-    });
+    }, sig);
 
     c.addEventListener('mousemove', e => {
       if (this.mode !== 'draw') return;
@@ -352,7 +363,7 @@ class ShikakuGame {
         this.preview = {r1:Math.min(this.drawStart.r,cell.r),c1:Math.min(this.drawStart.c,cell.c),r2:Math.max(this.drawStart.r,cell.r),c2:Math.max(this.drawStart.c,cell.c)};
         this.render();
       }
-    });
+    }, sig);
 
     c.addEventListener('mouseup', e => {
       if (this.mode !== 'draw') return;
@@ -365,25 +376,19 @@ class ShikakuGame {
       }
       this.mode='idle'; this.drawStart=null; this.drawCurrent=null; this.preview=null; this.pointerDownPos=null;
       this.render();
-    });
+    }, sig);
 
-    // mouseleave: just cancel the preview visually, do NOT place rect
-    // Placement happens on mouseup (which fires even outside the canvas)
     c.addEventListener('mouseleave', e => {
-      if (this.mode === 'draw') {
-        this.preview = null;
-        this.render();
-      }
-    });
+      if (this.mode === 'draw') { this.preview = null; this.render(); }
+    }, sig);
 
     c.addEventListener('contextmenu', e => {
       e.preventDefault();
       const pos = this._evPos(e);
       const cell = this._canvasToCell(pos.x, pos.y);
       if (cell) this.eraseAt(cell.r, cell.c);
-    });
+    }, sig);
 
-    // Touch
     let lastTouches = null;
 
     c.addEventListener('touchstart', e => {
@@ -404,7 +409,7 @@ class ShikakuGame {
         this.mode='idle'; this.preview=null; this.render();
         lastTouches=[{x:ts[0].clientX,y:ts[0].clientY},{x:ts[1].clientX,y:ts[1].clientY}];
       }
-    }, {passive:false});
+    }, {passive:false, signal: this._abortController.signal});
 
     c.addEventListener('touchmove', e => {
       e.preventDefault();
@@ -430,7 +435,7 @@ class ShikakuGame {
           this.render();
         }
       }
-    }, {passive:false});
+    }, {passive:false, signal: this._abortController.signal});
 
     c.addEventListener('touchend', e => {
       e.preventDefault();
@@ -449,7 +454,7 @@ class ShikakuGame {
       } else if (e.touches.length===1) {
         this.mode='idle'; lastTouches=null;
       }
-    }, {passive:false});
+    }, {passive:false, signal: this._abortController.signal});
   }
 
   // ── Render ──
@@ -547,7 +552,8 @@ let currentPuzzle = null, currentName = 'Classic';
 function fmtTime(s){return `${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`;}
 
 function startGame(puzzle, name) {
-  // Initialise the game engine with the given puzzle - never generates a new one
+  // Destroy old game first — removes all its event listeners from the canvas
+  if (game) game.destroy();
   currentPuzzle = puzzle;
   currentName = name;
   const canvas = document.getElementById('game-canvas');
