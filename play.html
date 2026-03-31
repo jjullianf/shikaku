@@ -201,18 +201,16 @@ class ShikakuGame {
     const ch = this._naturalH;
     const scaledW = Math.round(cw * this.zoom);
     const scaledH = Math.round(ch * this.zoom);
-
-    // Center if smaller than viewport using margin
     const padX = Math.max(0, Math.floor((this._vw - scaledW) / 2));
     const padY = Math.max(0, Math.floor((this._vh - scaledH) / 2));
 
-    // Resize canvas to match zoomed size — but use setTransform to avoid layout resize events
-    const dpr = window.devicePixelRatio || 1;
+    // Only update DOM if values actually changed — prevents spurious resize events
+    const newW = scaledW + 'px', newH = scaledH + 'px';
+    const newM = `${padY}px ${padX}px`;
+    if (this.canvas.style.width !== newW)  this.canvas.style.width  = newW;
+    if (this.canvas.style.height !== newH) this.canvas.style.height = newH;
+    if (this.canvas.style.margin !== newM) this.canvas.style.margin = newM;
     this.canvas.style.transform = '';
-    this.canvas.style.margin = `${padY}px ${padX}px`;
-    this.canvas.style.width  = scaledW + 'px';
-    this.canvas.style.height = scaledH + 'px';
-    // Canvas pixel buffer stays at natural size — CSS width/height scales it visually
     this._updateZoomLabel();
   }
 
@@ -567,12 +565,21 @@ function loadPuzzle(rows, cols, name, isNew) {
   };
 }
 
-// Guard against accidental button triggers right after canvas touch interactions
+// Guard against accidental button triggers right after canvas interactions
 let lastCanvasTouchEnd = 0;
+let lastCanvasMouseDown = 0;
 document.getElementById('canvas-scroll').addEventListener('touchend', () => {
   lastCanvasTouchEnd = Date.now();
 }, {passive: true});
-// Also catch touchstart on buttons and block if canvas was just used
+// Key fix: track mousedown on canvas so dragging onto a button doesn't trigger it
+document.getElementById('game-canvas').addEventListener('mousedown', () => {
+  lastCanvasMouseDown = Date.now();
+}, {passive: true});
+document.addEventListener('mouseup', () => {
+  // When mouse is released anywhere after a canvas mousedown, mark the time
+  if (lastCanvasMouseDown > 0) lastCanvasTouchEnd = Date.now();
+}, {passive: true});
+
 function safeTap(fn) {
   return (e) => {
     if (Date.now() - lastCanvasTouchEnd < 600) {
@@ -622,9 +629,15 @@ document.getElementById('win-share').addEventListener('click',()=>{
   shareResult(+a.dataset.rows,+a.dataset.cols,solvedElapsed);
 });
 let resizeTimer = null;
+let lastWindowW = window.innerWidth;
+let lastWindowH = window.innerHeight;
 window.addEventListener('resize', () => {
+  // Only react to actual window size changes, not canvas layout reflows
+  if (window.innerWidth === lastWindowW && window.innerHeight === lastWindowH) return;
+  lastWindowW = window.innerWidth;
+  lastWindowH = window.innerHeight;
   clearTimeout(resizeTimer);
-  resizeTimer = setTimeout(() => game?.resize(), 150);
+  resizeTimer = setTimeout(() => game?.resize(), 200);
 });
 
 loadPuzzle(10,10,'Classic',false);
