@@ -565,58 +565,60 @@ function loadPuzzle(rows, cols, name, isNew) {
   };
 }
 
-// Guard against accidental button triggers right after canvas interactions
-let lastCanvasTouchEnd = 0;
-let lastCanvasMouseDown = 0;
-document.getElementById('canvas-scroll').addEventListener('touchend', () => {
-  lastCanvasTouchEnd = Date.now();
-}, {passive: true});
-// Key fix: track mousedown on canvas so dragging onto a button doesn't trigger it
+// ── Button protection ────────────────────────────────────────────────────────
+// Track whether user is currently dragging on the canvas.
+// If mouseup fires on a button after a canvas drag, block the click.
+let _canvasDragging = false;
 document.getElementById('game-canvas').addEventListener('mousedown', () => {
-  lastCanvasMouseDown = Date.now();
+  _canvasDragging = true;
 }, {passive: true});
 document.addEventListener('mouseup', () => {
-  // When mouse is released anywhere after a canvas mousedown, mark the time
-  if (lastCanvasMouseDown > 0) lastCanvasTouchEnd = Date.now();
+  // Small delay so the button's click handler sees the flag before we clear it
+  setTimeout(() => { _canvasDragging = false; }, 50);
 }, {passive: true});
 
-function safeTap(fn) {
+function guardedClick(fn) {
   return (e) => {
-    if (Date.now() - lastCanvasTouchEnd < 600) {
-      e.preventDefault();
-      e.stopPropagation();
-      return;
-    }
+    if (_canvasDragging) { e.preventDefault(); e.stopPropagation(); return; }
     fn();
   };
 }
 
-document.getElementById('reset-btn').addEventListener('click', safeTap(() => game?.reset()));
-document.getElementById('new-btn').addEventListener('click', safeTap(() => {
-  const a=document.querySelector('.size-btn.active');
-  loadPuzzle(+a.dataset.rows,+a.dataset.cols,a.dataset.name,true);
+document.getElementById('reset-btn').addEventListener('mousedown', (e) => { if(_canvasDragging) e.preventDefault(); });
+document.getElementById('reset-btn').addEventListener('click', guardedClick(() => game?.reset()));
+
+document.getElementById('new-btn').addEventListener('mousedown', (e) => { if(_canvasDragging) e.preventDefault(); });
+document.getElementById('new-btn').addEventListener('click', guardedClick(() => {
+  const a = document.querySelector('.size-btn.active');
+  loadPuzzle(+a.dataset.rows, +a.dataset.cols, a.dataset.name, true);
 }));
-document.getElementById('new-btn').addEventListener('touchstart', (e) => {
-  if (Date.now() - lastCanvasTouchEnd < 600) { e.preventDefault(); e.stopPropagation(); }
-}, {passive: false});
+
 document.querySelectorAll('.size-btn').forEach(btn => {
-  btn.addEventListener('click', safeTap(() => {
-    document.querySelectorAll('.size-btn').forEach(b=>b.classList.remove('active'));
+  btn.addEventListener('mousedown', (e) => { if(_canvasDragging) e.preventDefault(); });
+  btn.addEventListener('click', guardedClick(() => {
+    document.querySelectorAll('.size-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
-    puzzleIndex=0;
-    loadPuzzle(+btn.dataset.rows,+btn.dataset.cols,btn.dataset.name,true);
+    puzzleIndex = 0;
+    loadPuzzle(+btn.dataset.rows, +btn.dataset.cols, btn.dataset.name, true);
   }));
-  btn.addEventListener('touchstart', (e) => {
-    if (Date.now() - lastCanvasTouchEnd < 600) { e.preventDefault(); e.stopPropagation(); }
-  }, {passive: false});
 });
-document.getElementById('win-next').addEventListener('click',()=>{
+
+document.getElementById('win-next').addEventListener('click', () => {
+  _canvasDragging = false;
   document.getElementById('win-overlay').classList.remove('show');
-  const a=document.querySelector('.size-btn.active');
-  loadPuzzle(+a.dataset.rows,+a.dataset.cols,a.dataset.name,true);
+  const a = document.querySelector('.size-btn.active');
+  loadPuzzle(+a.dataset.rows, +a.dataset.cols, a.dataset.name, true);
 });
-document.getElementById('win-close').addEventListener('click',()=>document.getElementById('win-overlay').classList.remove('show'));
-document.getElementById('win-overlay').addEventListener('click',e=>{if(e.target===e.currentTarget)e.currentTarget.classList.remove('show');});
+document.getElementById('win-close').addEventListener('click', () => {
+  _canvasDragging = false;
+  document.getElementById('win-overlay').classList.remove('show');
+});
+document.getElementById('win-overlay').addEventListener('click', e => {
+  if (e.target === e.currentTarget) {
+    _canvasDragging = false;
+    e.currentTarget.classList.remove('show');
+  }
+});
 
 function shareResult(rows, cols, elapsed) {
   const text = `⏱️ ${fmtTime(elapsed)}\nI solved a ${rows}×${cols} Shikaku — can you beat that? 🧩 shikaku.ch`;
