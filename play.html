@@ -538,13 +538,14 @@ class ShikakuGame {
 }
 
 // ── PAGE LOGIC ───────────────────────────────────────────────────────────────
-let game=null, timerInterval=null, puzzleIndex=1, solvedElapsed=0;
+let game = null, timerInterval = null, puzzleIndex = 1, solvedElapsed = 0;
+let currentPuzzle = null, currentName = 'Classic';
 function fmtTime(s){return `${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`;}
 
-function loadPuzzle(rows, cols, name, isNew) {
-  if (isNew) puzzleIndex++;
-  const seed = Math.floor(Math.random()*1e9)+1;
-  const puzzle = generatePuzzle(rows, cols, seed);
+function startGame(puzzle, name) {
+  // Initialise the game engine with the given puzzle - never generates a new one
+  currentPuzzle = puzzle;
+  currentName = name;
   const canvas = document.getElementById('game-canvas');
   const scroll = document.getElementById('canvas-scroll');
   game = new ShikakuGame(puzzle, canvas, scroll);
@@ -560,20 +561,24 @@ function loadPuzzle(rows, cols, name, isNew) {
     solvedElapsed = elapsed;
     document.getElementById('timer').textContent = fmtTime(elapsed);
     document.getElementById('win-time').textContent = fmtTime(elapsed);
-    document.getElementById('win-desc').textContent = `${rows}×${cols} puzzle solved`;
+    document.getElementById('win-desc').textContent = `${puzzle.rows}×${puzzle.cols} puzzle solved`;
     setTimeout(()=>document.getElementById('win-overlay').classList.add('show'), 600);
   };
 }
 
+function newPuzzle(rows, cols, name) {
+  // Only called on explicit user action — generates fresh seed
+  puzzleIndex++;
+  const seed = Math.floor(Math.random()*1e9)+1;
+  startGame(generatePuzzle(rows, cols, seed), name);
+}
+
 // ── Button protection ────────────────────────────────────────────────────────
-// Track whether user is currently dragging on the canvas.
-// If mouseup fires on a button after a canvas drag, block the click.
 let _canvasDragging = false;
 document.getElementById('game-canvas').addEventListener('mousedown', () => {
   _canvasDragging = true;
 }, {passive: true});
 document.addEventListener('mouseup', () => {
-  // Small delay so the button's click handler sees the flag before we clear it
   setTimeout(() => { _canvasDragging = false; }, 50);
 }, {passive: true});
 
@@ -590,7 +595,7 @@ document.getElementById('reset-btn').addEventListener('click', guardedClick(() =
 document.getElementById('new-btn').addEventListener('mousedown', (e) => { if(_canvasDragging) e.preventDefault(); });
 document.getElementById('new-btn').addEventListener('click', guardedClick(() => {
   const a = document.querySelector('.size-btn.active');
-  loadPuzzle(+a.dataset.rows, +a.dataset.cols, a.dataset.name, true);
+  newPuzzle(+a.dataset.rows, +a.dataset.cols, a.dataset.name);
 }));
 
 document.querySelectorAll('.size-btn').forEach(btn => {
@@ -599,7 +604,7 @@ document.querySelectorAll('.size-btn').forEach(btn => {
     document.querySelectorAll('.size-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     puzzleIndex = 0;
-    loadPuzzle(+btn.dataset.rows, +btn.dataset.cols, btn.dataset.name, true);
+    newPuzzle(+btn.dataset.rows, +btn.dataset.cols, btn.dataset.name);
   }));
 });
 
@@ -607,7 +612,7 @@ document.getElementById('win-next').addEventListener('click', () => {
   _canvasDragging = false;
   document.getElementById('win-overlay').classList.remove('show');
   const a = document.querySelector('.size-btn.active');
-  loadPuzzle(+a.dataset.rows, +a.dataset.cols, a.dataset.name, true);
+  newPuzzle(+a.dataset.rows, +a.dataset.cols, a.dataset.name);
 });
 document.getElementById('win-close').addEventListener('click', () => {
   _canvasDragging = false;
@@ -620,21 +625,19 @@ document.getElementById('win-overlay').addEventListener('click', e => {
   }
 });
 
-function shareResult(rows, cols, elapsed) {
-  const text = `⏱️ ${fmtTime(elapsed)}\nI solved a ${rows}×${cols} Shikaku — can you beat that? 🧩 shikaku.ch`;
+function shareResult(elapsed) {
+  const p = currentPuzzle;
+  const text = `⏱️ ${fmtTime(elapsed)}\nI solved a ${p.rows}×${p.cols} Shikaku — can you beat that? 🧩 shikaku.ch`;
   const waUrl = `https://wa.me/?text=${encodeURIComponent(text)}`;
   if (navigator.share) navigator.share({text});
   else window.open(waUrl, '_blank');
 }
-document.getElementById('win-share').addEventListener('click',()=>{
-  const a=document.querySelector('.size-btn.active');
-  shareResult(+a.dataset.rows,+a.dataset.cols,solvedElapsed);
-});
+document.getElementById('win-share').addEventListener('click', () => shareResult(solvedElapsed));
+
 let resizeTimer = null;
 let lastWindowW = window.innerWidth;
 let lastWindowH = window.innerHeight;
 window.addEventListener('resize', () => {
-  // Only react to actual window size changes, not canvas layout reflows
   if (window.innerWidth === lastWindowW && window.innerHeight === lastWindowH) return;
   lastWindowW = window.innerWidth;
   lastWindowH = window.innerHeight;
@@ -642,7 +645,9 @@ window.addEventListener('resize', () => {
   resizeTimer = setTimeout(() => game?.resize(), 200);
 });
 
-loadPuzzle(10,10,'Classic',false);
+// Initial load
+const _initSeed = Math.floor(Math.random()*1e9)+1;
+startGame(generatePuzzle(10, 10, _initSeed), 'Classic');
 </script>
 </body>
 </html>
