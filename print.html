@@ -199,7 +199,7 @@ body {
   font-size: .9rem;
   letter-spacing: .14em;
   font-weight: 400;
-  margin-bottom: 8mm;
+  margin-bottom: 4mm;
   color: #1a1916;
   border-bottom: 1px solid #c4a565;
   padding-bottom: 3mm;
@@ -332,7 +332,7 @@ function renderPuzzle(canvas, puzzle, showSolution) {
   const {rows, cols} = puzzle;
   const dpr = window.devicePixelRatio || 1;
   // Cell size based on grid: small grids get bigger cells
-  const maxPx = cols <= 5  ? Math.floor(86 * 3.7795)   // 5×5: 6 fit per page
+  const maxPx = cols <= 5  ? Math.floor(60 * 3.7795)   // 5×5: 6 fit per page (2×3)
               : cols <= 10 ? Math.floor(150 * 3.7795)  // 10×10: fills page
               : cols <= 20 ? Math.floor(150 * 3.7795)  // 20×20: fills page
                            : Math.floor(150 * 3.7795); // 25×25: fills page
