@@ -51,6 +51,10 @@ main{padding-top:56px;min-height:100vh}
 /* The canvas itself */
 .canvas-scroll canvas{display:block;cursor:crosshair;touch-action:none}
 .game-hint{font-size:.68rem;color:var(--ink3);letter-spacing:.06em;text-align:center;opacity:.7}
+.play-stats{display:flex;gap:12px;justify-content:center;margin-bottom:24px;flex-wrap:wrap}
+.info-card{background:var(--paper2);border:1px solid var(--border);border-radius:var(--r);padding:12px 24px;text-align:center;min-width:90px}
+.info-card .val{display:block;font-size:1.2rem;font-weight:300;color:var(--gold);letter-spacing:.04em;font-variant-numeric:tabular-nums}
+.info-card .lbl{display:block;font-size:.6rem;color:var(--ink3);letter-spacing:.12em;text-transform:uppercase;margin-top:4px}
 .btn{display:inline-flex;align-items:center;gap:8px;font-family:'DM Mono',monospace;font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;padding:10px 22px;border:1px solid var(--border);background:var(--paper2);color:var(--ink2);cursor:pointer;border-radius:var(--r);transition:all var(--t);text-decoration:none}
 .btn:hover{background:var(--paper3);color:var(--ink);border-color:var(--gold2)}
 .btn-primary{background:var(--gold)!important;color:var(--paper)!important;border-color:var(--gold)!important}
@@ -105,6 +109,11 @@ main{padding-top:56px;min-height:100vh}
     <div class="size-option"><button class="size-btn active" data-rows="10" data-cols="10" data-name="Classic">10 × 10</button><small>Classic</small></div>
     <div class="size-option"><button class="size-btn" data-rows="20" data-cols="20" data-name="Hard">20 × 20</button><small>Hard</small></div>
     <div class="size-option"><button class="size-btn" data-rows="25" data-cols="25" data-name="Expert">25 × 25</button><small>Expert</small></div>
+  </div>
+  <div class="play-stats" id="play-stats">
+    <div class="info-card"><span class="val" id="stat-solved">—</span><span class="lbl">Solved</span></div>
+    <div class="info-card"><span class="val" id="stat-best">—</span><span class="lbl">Fastest</span></div>
+    <div class="info-card"><span class="val" id="stat-avg">—</span><span class="lbl">Average</span></div>
   </div>
   <div class="game-with-ads">
     <!-- Left sidebar ad -->
@@ -507,14 +516,33 @@ class ShikakuGame {
 // ── PAGE LOGIC ───────────────────────────────────────────────────────────────
 let game=null, timerInterval=null, puzzleIndex=0, solvedElapsed=0;
 let currentPuzzle=null;
+const STATS_KEY = 'shikaku_play_stats';
+function loadStats(name) {
+  try { return JSON.parse(localStorage.getItem(STATS_KEY) || '{}')[name] || {solved:0,best:null,total:0}; }
+  catch(e) { return {solved:0,best:null,total:0}; }
+}
+function saveStats(name, st) {
+  try {
+    const all = JSON.parse(localStorage.getItem(STATS_KEY) || '{}');
+    all[name] = st;
+    localStorage.setItem(STATS_KEY, JSON.stringify(all));
+  } catch(e) {}
+}
 function fmtTime(s){return Math.floor(s/60)+':'+String(s%60).padStart(2,'0');}
+function renderPlayStats(name) {
+  const st = loadStats(name);
+  document.getElementById('stat-solved').textContent = st.solved || '—';
+  document.getElementById('stat-best').textContent = st.best ? fmtTime(st.best) : '—';
+  document.getElementById('stat-avg').textContent = st.solved ? fmtTime(Math.round(st.total/st.solved)) : '—';
+}
 
 function startGame(puzzle, name) {
-  if (game) game.destroy();       // remove old listeners — one game at a time
+  if (game) game.destroy();
   currentPuzzle = puzzle;
   game = new ShikakuGame(puzzle, document.getElementById('game-canvas'), document.getElementById('canvas-scroll'));
   document.getElementById('diff-badge').textContent = name;
   document.getElementById('puzzle-counter').textContent = 'Puzzle #' + puzzleIndex;
+  renderPlayStats(name);
   clearInterval(timerInterval);
   timerInterval = setInterval(()=>{
     document.getElementById('timer').textContent = fmtTime(Math.floor((Date.now()-game.startTime)/1000));
@@ -525,12 +553,18 @@ function startGame(puzzle, name) {
     document.getElementById('timer').textContent=fmtTime(elapsed);
     document.getElementById('win-time').textContent=fmtTime(elapsed);
     document.getElementById('win-desc').textContent=puzzle.rows+'×'+puzzle.cols+' puzzle solved';
+    // Save stats
+    const st = loadStats(name);
+    st.solved++;
+    st.total = (st.total||0) + elapsed;
+    if (!st.best || elapsed < st.best) st.best = elapsed;
+    saveStats(name, st);
+    renderPlayStats(name);
     setTimeout(()=>document.getElementById('win-overlay').classList.add('show'),600);
   };
 }
 
 function newPuzzle(rows, cols, name) {
-  // ONLY called by explicit user button press — never called internally
   puzzleIndex++;
   const seed = Math.floor(Math.random()*1e9)+1;
   startGame(generatePuzzle(rows, cols, seed), name);
