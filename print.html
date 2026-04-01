@@ -500,8 +500,8 @@ function buildSolutionPages(allPuzzles) {
     const gridCols  = group.cols <= 5 ? 2 : 1;
     const solCS     = group.cols <= 5  ? 34
                     : group.cols <= 10 ? 28
-                    : group.cols <= 20 ? 20   // Hard: bigger
-                    : 16;                    // Expert: bigger
+                    : group.cols <= 20 ? 28   // Hard: same as puzzle
+                    : 22;                    // Expert: same as puzzle
 
     for (let i = 0; i < group.puzzles.length; i += perPage) {
       const p = makePage('puzzle-page');
