@@ -498,9 +498,9 @@ function buildSolutionPages(allPuzzles) {
     // 25×25: 1 per page, 1 col
     const perPage   = group.cols <= 5 ? 6 : group.cols <= 10 ? 2 : 1;
     const gridCols  = group.cols <= 5 ? 2 : 1;
-    const solCS     = group.cols <= 5  ? 34
-                    : group.cols <= 10 ? 28
-                    : group.cols <= 20 ? 28   // Hard: same as puzzle
+    const solCS     = group.cols <= 5  ? 45   // 5×5: matches puzzle cell size (floor(226/5))
+                    : group.cols <= 10 ? 49  // 10×10: larger, still 2 per page
+                    : group.cols <= 20 ? 28  // Hard: same as puzzle
                     : 22;                    // Expert: same as puzzle
 
     for (let i = 0; i < group.puzzles.length; i += perPage) {
