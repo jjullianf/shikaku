@@ -13,7 +13,7 @@
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1892773925409513" crossorigin="anonymous"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>Shikaku Puzzle — Play Free Online | 4 Difficulty Levels</title>
+<title>Shikaku Puzzle — Play Free Online</title>
 <meta name="description" content="Play free Shikaku puzzles online — choose from Starter (5×5) to Expert (25×25). Unlimited puzzles, no account needed. The best free Shikaku challenge online.">
 <meta name="keywords" content="shikaku puzzle, shikaku online, shikaku challenge, free shikaku game, logic puzzle online, japanese number puzzle, rectangle puzzle game">
 <meta property="og:title" content="Shikaku Puzzle — Play Free Online">
@@ -115,6 +115,7 @@ main{padding-top:56px;min-height:100vh}
     <li><a href="play.html" class="active">Play</a></li>
     <li><a href="shop.html">Shop</a></li>
     <li><a href="about.html">About</a></li>
+    <li><a href="guide.html">Guide</a></li>
   </ul>
 </nav>
 <main><div class="page">
@@ -552,6 +553,7 @@ function startGame(puzzle, name) {
   timerInterval = setInterval(()=>{
     document.getElementById('timer').textContent = fmtTime(Math.floor((Date.now()-game.startTime)/1000));
   }, 500);
+  gtag('event', 'puzzle_started', { puzzle_type: 'free_play', grid_size: puzzle.rows+'x'+puzzle.cols, difficulty: name });
   game.onSolve = elapsed => {
     clearInterval(timerInterval); timerInterval=null;
     solvedElapsed=elapsed;
@@ -565,6 +567,7 @@ function startGame(puzzle, name) {
     if (!st.best || elapsed < st.best) st.best = elapsed;
     saveStats(name, st);
     renderPlayStats(name);
+    gtag('event', 'puzzle_completed', { puzzle_type: 'free_play', grid_size: puzzle.rows+'x'+puzzle.cols, difficulty: name, time_seconds: elapsed });
     setTimeout(()=>document.getElementById('win-overlay').classList.add('show'),600);
   };
 }
@@ -624,6 +627,7 @@ document.getElementById('win-overlay').addEventListener('click',e=>{
 document.getElementById('win-share').addEventListener('click',()=>{
   const p=currentPuzzle;
   const text='⏱️ '+fmtTime(solvedElapsed)+'\nI solved a '+p.rows+'×'+p.cols+' Shikaku — can you beat that? 🧩 shikaku.ch';
+  gtag('event', 'puzzle_shared', { puzzle_type: 'free_play', grid_size: p.rows+'x'+p.cols, difficulty: document.querySelector('.size-btn.active')?.dataset.name });
   if(navigator.share) navigator.share({text});
   else window.open('https://wa.me/?text='+encodeURIComponent(text),'_blank');
 });
