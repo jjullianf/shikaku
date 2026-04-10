@@ -17,7 +17,7 @@
 <meta name="description" content="Learn how to play Shikaku — the Japanese logic puzzle where you divide a grid into rectangles. Free daily Shikaku challenge at shikaku.ch, no app needed.">
 <meta name="keywords" content="what is shikaku, shikaku rules, how to play shikaku, shikaku daily, shikaku challenge, shikaku puzzle, logic puzzle, japanese puzzle">
 <meta property="og:title" content="What is Shikaku? How to Play Shikaku">
-<meta property="og:description" content="Learn how to play Shikaku — the Japanese logic puzzle where you divide a grid into rectangles. Free daily Shikaku challenge at shikaku.ch, no app needed.">
+<meta property="og:description" content="Learn how to play Shikaku — the Japanese logic puzzle where you divide a grid into rectangles. Free daily Shikaku challenge at shikaku.ch.">
 <meta property="og:url" content="https://shikaku.ch/about.html">
 <meta name="robots" content="index, follow">
 <link rel="canonical" href="https://shikaku.ch/about.html">
@@ -88,14 +88,17 @@
 @media(prefers-color-scheme:dark){:root{--ink:#e8e6de;--ink2:#a8a69e;--ink3:#686660;--paper:#111110;--paper2:#1a1918;--paper3:#222120;--gold:#c4a565;--gold2:#8a6f3a;--border:rgba(232,230,222,0.1);--shadow:0 2px 20px rgba(0,0,0,0.3)}}
 html{font-size:16px}
 body{font-family:'DM Mono',monospace;background:var(--paper);color:var(--ink);min-height:100vh;-webkit-font-smoothing:antialiased}
-nav{position:fixed;top:0;left:0;right:0;z-index:100;background:var(--paper);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 24px;height:56px}
-.nav-logo{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--ink)}
+nav{position:fixed;top:0;left:0;right:0;z-index:100;background:var(--paper);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 16px 0 24px;height:56px;gap:12px}
+.nav-logo{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--ink);flex-shrink:0}
 .nav-logo-icon{width:34px;height:34px;flex-shrink:0}
 .nav-logo-text{font-family:'Noto Serif JP',serif;font-weight:300;font-size:1.1rem;letter-spacing:.12em}
 .nav-logo-text span{color:var(--gold)}
-.nav-links{display:flex;gap:28px;list-style:none}
-.nav-links a{font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;color:var(--ink2);text-decoration:none;transition:color var(--t)}
+.nav-links{display:flex;gap:24px;list-style:none;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;flex:1;justify-content:flex-end}
+.nav-links::-webkit-scrollbar{display:none}
+.nav-links li{flex-shrink:0}
+.nav-links a{font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;color:var(--ink2);text-decoration:none;transition:color var(--t);white-space:nowrap}
 .nav-links a:hover,.nav-links a.active{color:var(--gold)}
+@media(max-width:480px){.nav-logo-text{display:none}}
 main{padding-top:56px;min-height:100vh}
 .page{max-width:680px;margin:0 auto;padding:40px 24px 80px}
 .page-header{text-align:center;margin-bottom:48px}

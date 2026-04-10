@@ -14,12 +14,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Shikaku Puzzle Book</title>
-<meta name="description" content="Buy the Shikaku puzzle book: 120 logic puzzles across four difficulty levels in a compact A5 softcover. Perfect for beginners and experts. Available on Amazon for €9.">
-<meta name="keywords" content="shikaku puzzle book, shikaku book, logic puzzle book, japanese puzzle book, shikaku amazon, rectangle puzzle book">
+<meta name="description" content="Buy the Shikaku puzzle book: 120 logic puzzles across four difficulty levels. Available on Amazon for €9.">
+<meta name="keywords" content="shikaku puzzle book, shikaku book, logic puzzle book, shikaku amazon">
 <meta property="og:title" content="Shikaku Puzzle Book">
-<meta property="og:description" content="120 Shikaku logic puzzles in a compact A5 softcover. Four difficulty levels. Available on Amazon for €9.">
 <meta property="og:url" content="https://shikaku.ch/shop.html">
 <link rel="canonical" href="https://shikaku.ch/shop.html">
+<meta name="description" content="A pocket-sized book of 120 Shikaku puzzles across four difficulty levels. A5 softcover, ships worldwide. Coming soon from shikaku.ch.">
 <link rel="icon" type="image/png" href="favicon.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -29,12 +29,14 @@
 :root{--ink:#1a1916;--ink2:#4a4840;--ink3:#8a8880;--paper:#faf9f5;--paper2:#f0ede5;--paper3:#e8e4d8;--gold:#8a6f3a;--gold2:#c4a565;--green:#3a7a50;--border:rgba(26,25,22,0.12);--shadow:0 2px 20px rgba(26,25,22,0.08);--r:4px;--t:0.18s ease}
 @media(prefers-color-scheme:dark){:root{--ink:#e8e6de;--ink2:#a8a69e;--ink3:#686660;--paper:#111110;--paper2:#1a1918;--paper3:#222120;--gold:#c4a565;--gold2:#8a6f3a;--green:#5aaa70;--border:rgba(232,230,222,0.1);--shadow:0 2px 20px rgba(0,0,0,0.3)}}
 html{font-size:16px}body{font-family:'DM Mono',monospace;background:var(--paper);color:var(--ink);min-height:100vh;-webkit-font-smoothing:antialiased}
-nav{position:fixed;top:0;left:0;right:0;z-index:100;background:var(--paper);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 24px;height:56px}
-.nav-logo{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--ink)}
+nav{position:fixed;top:0;left:0;right:0;z-index:100;background:var(--paper);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 16px 0 24px;height:56px;gap:12px}
+.nav-logo{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--ink);flex-shrink:0}
 .nav-logo-icon{width:34px;height:34px;flex-shrink:0}
 .nav-logo-text{font-family:'Noto Serif JP',serif;font-weight:300;font-size:1.1rem;letter-spacing:.12em}
-.nav-logo span{color:var(--gold)}.nav-links{display:flex;gap:28px;list-style:none}
-.nav-links a{font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;color:var(--ink2);text-decoration:none;transition:color var(--t)}
+.nav-logo span{color:var(--gold)}.nav-links{display:flex;gap:24px;list-style:none;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;flex:1;justify-content:flex-end}
+.nav-links::-webkit-scrollbar{display:none}
+.nav-links li{flex-shrink:0}
+.nav-links a{font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;color:var(--ink2);text-decoration:none;transition:color var(--t);white-space:nowrap}
 .nav-links a:hover,.nav-links a.active{color:var(--gold)}
 main{padding-top:56px;min-height:100vh}.page{max-width:720px;margin:0 auto;padding:40px 24px 80px}
 .page-header{text-align:center;margin-bottom:32px}
@@ -95,6 +97,7 @@ main{padding-top:56px;min-height:100vh}.page{max-width:720px;margin:0 auto;paddi
 .faq-item:first-child{border-top:1px solid var(--border)}
 .faq-q{font-size:.8rem;font-weight:500;color:var(--ink);letter-spacing:.04em;margin-bottom:8px}
 .faq-a{font-size:.78rem;color:var(--ink2);line-height:1.75;letter-spacing:.03em}
+@media(max-width:480px){.nav-logo-text{display:none}}
 @media(max-width:560px){nav{padding:0 16px}.nav-links{gap:18px}.page{padding:28px 16px 60px}.shop-hero{flex-direction:column;align-items:center}.features-grid{grid-template-columns:1fr}}
 </style>
 </head>
@@ -139,7 +142,7 @@ main{padding-top:56px;min-height:100vh}.page{max-width:720px;margin:0 auto;paddi
     <div class="book-info">
       <h2>Shikaku: A Book of Puzzles</h2>
       <div class="price">€9 <small>· free shipping with Prime</small></div>
-      <p>120 Shikaku logic puzzles in a compact A5 softcover. Four difficulty levels from beginner to expert, clean print design, and full solutions at the back. Perfect for commutes, travel, or a quiet afternoon away from screens.</p>
+      <p>120 hand-crafted Shikaku puzzles in a compact A5 softcover. Four difficulty levels, clean print design, and full solutions at the back. Quiet enough for a commute, satisfying enough for an afternoon.</p>
       <ul class="book-features">
         <li>120 puzzles across four difficulty levels</li>
         <li>5×5 Starter · 10×10 Classic · 20×20 Hard · 25×25 Expert</li>
@@ -156,8 +159,8 @@ main{padding-top:56px;min-height:100vh}.page{max-width:720px;margin:0 auto;paddi
 
   <div class="content-section">
     <h2 class="section-title">Why a Shikaku puzzle book?</h2>
-    <p class="section-text">Shikaku is a Japanese logic puzzle — simple rules, deep strategy, and completely unique to every grid. Unlike Sudoku, it works entirely in rectangles: divide the grid so each number is enclosed by a rectangle with exactly that area. No guessing, no arithmetic. Pure spatial logic.</p>
-    <p class="section-text">Solving on paper is a different experience from a screen. No notifications, no battery, no distractions. Just a pencil and a grid. Each puzzle in this book has its own page with generous margins to sketch in. Whether you are on a commute, travelling, or looking for something to focus on, this is the kind of book that earns a permanent spot in a bag.</p>
+    <p class="section-text">There is something different about solving a puzzle on paper. No screen, no notifications, no battery to worry about. Just a pencil and a grid. Shikaku is one of those puzzles that works particularly well in print — the logic is visual, the rules are simple, and a solved page feels genuinely satisfying to look at.</p>
+    <p class="section-text">The book is designed to be picked up and put down. Each puzzle fits on its own page with plenty of space to work in. Whether you are commuting, travelling, or just looking for something to do with your hands, it is the kind of book that earns a spot in a bag.</p>
   </div>
 
   <hr class="divider">
@@ -207,7 +210,7 @@ main{padding-top:56px;min-height:100vh}.page{max-width:720px;margin:0 auto;paddi
       </div>
       <div class="faq-item">
         <div class="faq-q">How much does it cost?</div>
-        <div class="faq-a">€9. Amazon Prime members get free shipping. Shipping costs for non-Prime orders depend on your location and are shown at checkout.</div>
+        <div class="faq-a">€9. Amazon Prime members get free shipping.</div>
       </div>
       <div class="faq-item">
         <div class="faq-q">Does it ship internationally?</div>
@@ -215,7 +218,7 @@ main{padding-top:56px;min-height:100vh}.page{max-width:720px;margin:0 auto;paddi
       </div>
       <div class="faq-item">
         <div class="faq-q">Do I need to know Shikaku to enjoy the book?</div>
-        <div class="faq-a">Not at all. The rules are explained at the start of the book. The Starter section (40 puzzles on 5×5 grids) is designed for complete beginners.</div>
+        <div class="faq-a">Not at all. The rules are explained at the start of the book. The Starter section is designed for complete beginners.</div>
       </div>
       <div class="faq-item">
         <div class="faq-q">Is it suitable as a gift?</div>
@@ -225,10 +228,9 @@ main{padding-top:56px;min-height:100vh}.page{max-width:720px;margin:0 auto;paddi
   </div>
 
   <hr class="divider">
-
   <div class="content-section" style="text-align:center;">
     <h2 class="section-title">A great gift for puzzle lovers</h2>
-    <p class="section-text" style="max-width:480px;margin:0 auto 24px;">Looking for a gift for someone who enjoys Sudoku, logic puzzles, or quiet focused activities? The Shikaku puzzle book is compact, beautifully minimal, and works just as well for a complete beginner as for an experienced solver.</p>
+    <p class="section-text" style="max-width:480px;margin:0 auto 24px;">Looking for a gift for someone who enjoys Sudoku, logic puzzles, or quiet focused activities? The Shikaku puzzle book is compact, beautifully minimal, and works for beginners and experts alike.</p>
     <a href="https://amzn.to/4veAmui" target="_blank" rel="sponsored noopener" class="btn btn-primary" style="font-size:.78rem;padding:13px 28px;letter-spacing:.12em;">Get yours now →</a>
   </div>
 
