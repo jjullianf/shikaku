@@ -980,7 +980,7 @@ function updateLBVisibility(){
 }
 updateLBVisibility();
 window.addEventListener('resize',updateLBVisibility);
-fetchLeaderboard().then(renderLB);
+fetchLeaderboard().then(entries=>{renderLB(entries);setTimeout(()=>game&&game.resize(),50);});
 
 function showWinLBSection(){
   const sec=document.getElementById('win-leaderboard-section');
