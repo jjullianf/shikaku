@@ -27,6 +27,7 @@
 <script type="application/ld+json">
 {"@context":"https://schema.org","@type":"WebApplication","name":"Shikaku Daily Puzzle","url":"https://shikaku.ch/","description":"A free daily Shikaku logic puzzle.","applicationCategory":"GameApplication","genre":"Puzzle","operatingSystem":"Any","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}}
 </script>
+<link rel="shortcut icon" href="favicon.ico">
 <link rel="icon" type="image/png" href="favicon.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -72,7 +73,7 @@ main{padding-top:56px;min-height:100vh}
 .timer{font-variant-numeric:tabular-nums;color:var(--ink2)}
 /* Canvas fills its container — zoom/pan done via canvas 2D context transform */
 .canvas-wrap{position:relative;width:100%;max-width:580px;border-radius:var(--r);box-shadow:var(--shadow);background:var(--paper2);touch-action:none;cursor:crosshair;display:block}
-.canvas-wrap canvas{display:block;width:100%;height:100%}
+.canvas-wrap canvas{display:block;max-width:100%}
 
 .game-hint{font-size:.68rem;color:var(--ink3);letter-spacing:.06em;text-align:center;opacity:.7}
 .btn{display:inline-flex;align-items:center;gap:8px;font-family:'DM Mono',monospace;font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;padding:10px 22px;border:1px solid var(--border);background:var(--paper2);color:var(--ink2);cursor:pointer;border-radius:var(--r);transition:all var(--t);text-decoration:none}
@@ -978,6 +979,7 @@ function updateLBVisibility(){
   document.getElementById('lb-desktop').style.display=wide?'block':'none';
   document.getElementById('lb-mobile').style.display=wide?'none':'block';
 }
+window.addEventListener('load',()=>{setTimeout(()=>game&&game.resize(),100);});
 updateLBVisibility();
 window.addEventListener('resize',updateLBVisibility);
 fetchLeaderboard().then(entries=>{renderLB(entries);setTimeout(()=>game&&game.resize(),50);});
