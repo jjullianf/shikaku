@@ -243,11 +243,12 @@ main{padding-top:56px;min-height:100vh}
 </main>
 
 <div class="win-overlay" id="win-overlay">
-  <div class="win-card">
+  <div class="win-card" style="max-width:420px">
     <span class="kigo">◈</span>
     <h2>Solved</h2>
     <p>Today's puzzle complete</p>
     <span class="time-display" id="win-time">—</span>
+    <div id="win-leaderboard-section" style="width:100%;margin-bottom:12px"></div>
     <div class="win-card-btns">
       <button class="btn btn-primary" id="win-share">↗ Share result</button>
       <a href="play.html" class="btn">Play more</a>
@@ -911,6 +912,98 @@ window.addEventListener('resize',()=>{
   _lastW=window.innerWidth;_lastH=window.innerHeight;
   game.resize();
 });
+
+// ── LEADERBOARD ──────────────────────────────────────────────────────────────
+const SUPA_URL='https://thxgpofgpeqtmhucouqq.supabase.co';
+const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRoeGdwb2ZncGVxdG1odWNvdXFxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwODMxNzcsImV4cCI6MjA5MTY1OTE3N30.oUCwQeLTi1MjOzpH_wRIR6W9v_ghElAGnDzBPuc4Qls';
+const LB_KEY='shikaku_lb_submitted';
+function getTodayStr(){const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
+function hasSubmittedToday(){const v=JSON.parse(localStorage.getItem(LB_KEY)||'{}');return v.date===getTodayStr();}
+function markSubmittedToday(){localStorage.setItem(LB_KEY,JSON.stringify({date:getTodayStr()}));}
+async function fetchLeaderboard(){
+  try{const res=await fetch(`${SUPA_URL}/rest/v1/daily_leaderboard?date=eq.${getTodayStr()}&order=time_seconds.asc&limit=25`,{headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY}});return res.ok?await res.json():[];}catch(e){return [];}
+}
+async function submitScore(name,country,flag,seconds){
+  try{const res=await fetch(`${SUPA_URL}/rest/v1/daily_leaderboard`,{method:'POST',headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,'Content-Type':'application/json','Prefer':'return=minimal'},body:JSON.stringify({date:getTodayStr(),name,country,flag,time_seconds:seconds})});return res.ok||res.status===201;}catch(e){return false;}
+}
+const COUNTRIES=[
+  {name:'Afghanistan',flag:'🇦🇫'},{name:'Albania',flag:'🇦🇱'},{name:'Algeria',flag:'🇩🇿'},{name:'Argentina',flag:'🇦🇷'},
+  {name:'Australia',flag:'🇦🇺'},{name:'Austria',flag:'🇦🇹'},{name:'Belgium',flag:'🇧🇪'},{name:'Brazil',flag:'🇧🇷'},
+  {name:'Canada',flag:'🇨🇦'},{name:'Chile',flag:'🇨🇱'},{name:'China',flag:'🇨🇳'},{name:'Colombia',flag:'🇨🇴'},
+  {name:'Croatia',flag:'🇭🇷'},{name:'Czech Republic',flag:'🇨🇿'},{name:'Denmark',flag:'🇩🇰'},{name:'Egypt',flag:'🇪🇬'},
+  {name:'Finland',flag:'🇫🇮'},{name:'France',flag:'🇫🇷'},{name:'Germany',flag:'🇩🇪'},{name:'Greece',flag:'🇬🇷'},
+  {name:'Hong Kong',flag:'🇭🇰'},{name:'Hungary',flag:'🇭🇺'},{name:'India',flag:'🇮🇳'},{name:'Indonesia',flag:'🇮🇩'},
+  {name:'Ireland',flag:'🇮🇪'},{name:'Israel',flag:'🇮🇱'},{name:'Italy',flag:'🇮🇹'},{name:'Japan',flag:'🇯🇵'},
+  {name:'South Korea',flag:'🇰🇷'},{name:'Malaysia',flag:'🇲🇾'},{name:'Mexico',flag:'🇲🇽'},{name:'Netherlands',flag:'🇳🇱'},
+  {name:'New Zealand',flag:'🇳🇿'},{name:'Nigeria',flag:'🇳🇬'},{name:'Norway',flag:'🇳🇴'},{name:'Pakistan',flag:'🇵🇰'},
+  {name:'Philippines',flag:'🇵🇭'},{name:'Poland',flag:'🇵🇱'},{name:'Portugal',flag:'🇵🇹'},{name:'Romania',flag:'🇷🇴'},
+  {name:'Russia',flag:'🇷🇺'},{name:'Saudi Arabia',flag:'🇸🇦'},{name:'Singapore',flag:'🇸🇬'},{name:'South Africa',flag:'🇿🇦'},
+  {name:'Spain',flag:'🇪🇸'},{name:'Sweden',flag:'🇸🇪'},{name:'Switzerland',flag:'🇨🇭'},{name:'Taiwan',flag:'🇹🇼'},
+  {name:'Thailand',flag:'🇹🇭'},{name:'Turkey',flag:'🇹🇷'},{name:'Ukraine',flag:'🇺🇦'},{name:'United Arab Emirates',flag:'🇦🇪'},
+  {name:'United Kingdom',flag:'🇬🇧'},{name:'United States',flag:'🇺🇸'},{name:'Vietnam',flag:'🇻🇳'},{name:'Other',flag:'🌍'}
+];
+function lbFormHTML(sfx){
+  if(hasSubmittedToday())return '<div class="lb-submitted">✓ Score submitted</div>';
+  if(!game||!game.solved)return '<button class="lb-submit-btn" disabled>Solve to submit</button>';
+  const opts=COUNTRIES.map(c=>`<option value="${c.name}">${c.flag} ${c.name}</option>`).join('');
+  return `<div class="lb-form"><input class="lb-input" id="lbn-${sfx}" placeholder="Your name" maxlength="20"><select class="lb-input" id="lbc-${sfx}">${opts}</select><button class="lb-confirm-btn" id="lbk-${sfx}">Submit score</button></div>`;
+}
+function attachLBHandler(sfx){
+  const btn=document.getElementById('lbk-'+sfx);if(!btn)return;
+  btn.addEventListener('click',async()=>{
+    const nameEl=document.getElementById('lbn-'+sfx);
+    const name=(nameEl.value||'').trim();
+    if(!name){nameEl.focus();nameEl.style.borderColor='#c43030';return;}
+    const country=document.getElementById('lbc-'+sfx).value;
+    const flag=COUNTRIES.find(c=>c.name===country)?.flag||'🌍';
+    btn.disabled=true;btn.textContent='Submitting...';
+    const ok=await submitScore(name,country,flag,solvedElapsed);
+    if(ok){
+      markSubmittedToday();
+      fetchLeaderboard().then(entries=>{renderLB(entries);});
+      document.getElementById('win-leaderboard-section').innerHTML='<div style="border-top:1px solid var(--border);padding-top:14px;margin-top:4px"><div class="lb-submitted" style="color:var(--gold);font-size:.72rem;letter-spacing:.06em">✓ Score added to leaderboard!</div></div>';
+    }else{btn.disabled=false;btn.textContent='Submit score';alert('Could not submit — please try again.');}
+  });
+}
+function renderLB(entries){
+  const MONTHS2=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const d=new Date();
+  function inner(sfx){return `<div class="lb-title">Today's Leaderboard</div><div class="lb-date">${MONTHS2[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}</div><ul class="lb-list">${entries.length===0?'<li class="lb-empty">No entries yet — be first!</li>':entries.map((e,i)=>`<li class="lb-row"><span class="lb-rank">${i+1}</span><span class="lb-name">${e.flag} ${e.name}</span><span class="lb-time">${fmtTime(e.time_seconds)}</span></li>`).join('')}</ul>${lbFormHTML(sfx)}`;}
+  document.getElementById('lb-box-desktop').innerHTML=inner('d');
+  document.getElementById('lb-box-mobile').innerHTML=inner('m');
+  attachLBHandler('d');attachLBHandler('m');
+}
+function updateLBVisibility(){
+  const wide=window.innerWidth>=1024;
+  document.getElementById('lb-desktop').style.display=wide?'block':'none';
+  document.getElementById('lb-mobile').style.display=wide?'none':'block';
+}
+updateLBVisibility();
+window.addEventListener('resize',updateLBVisibility);
+fetchLeaderboard().then(renderLB);
+
+function showWinLBSection(){
+  const sec=document.getElementById('win-leaderboard-section');
+  if(!sec)return;
+  if(hasSubmittedToday()){sec.innerHTML='<div style="border-top:1px solid var(--border);padding-top:14px;margin-top:4px"><div class="lb-submitted" style="color:var(--gold);font-size:.72rem;letter-spacing:.06em">✓ Score already submitted today</div></div>';return;}
+  const opts=COUNTRIES.map(c=>`<option value="${c.name}">${c.flag} ${c.name}</option>`).join('');
+  sec.innerHTML=`<div style="border-top:1px solid var(--border);padding-top:16px;margin-top:4px"><p style="font-size:.68rem;color:var(--ink3);letter-spacing:.06em;margin-bottom:10px">Add your score to the leaderboard</p><div style="display:flex;flex-direction:column;gap:8px"><input class="lb-input" id="win-lb-name" placeholder="Your name" maxlength="20" style="width:100%"><select class="lb-input" id="win-lb-country" style="width:100%">${opts}</select><button class="lb-confirm-btn" id="win-lb-confirm">Add to leaderboard</button></div></div>`;
+  document.getElementById('win-lb-confirm').addEventListener('click',async()=>{
+    const nameEl=document.getElementById('win-lb-name');
+    const name=(nameEl.value||'').trim();
+    if(!name){nameEl.focus();nameEl.style.borderColor='#c43030';return;}
+    const country=document.getElementById('win-lb-country').value;
+    const flag=COUNTRIES.find(c=>c.name===country)?.flag||'🌍';
+    const btn=document.getElementById('win-lb-confirm');
+    btn.disabled=true;btn.textContent='Submitting...';
+    const ok=await submitScore(name,country,flag,solvedElapsed);
+    if(ok){
+      markSubmittedToday();
+      sec.innerHTML='<div style="border-top:1px solid var(--border);padding-top:14px;margin-top:4px"><div class="lb-submitted" style="color:var(--gold);font-size:.72rem;letter-spacing:.06em">✓ Score added to leaderboard!</div></div>';
+      fetchLeaderboard().then(renderLB);
+    }else{btn.disabled=false;btn.textContent='Add to leaderboard';alert('Could not submit — please try again.');}
+  });
+}
 </script>
 
 <a href="https://buymeacoffee.com/juulian" target="_blank" rel="noopener" style="position:fixed;bottom:24px;right:24px;z-index:999;display:flex;align-items:center;gap:8px;background:#8a6f3a;color:#faf9f5;font-family:'DM Mono',monospace;font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;padding:12px 20px;border-radius:50px;text-decoration:none;box-shadow:0 4px 20px rgba(0,0,0,.18);transition:background .18s ease" onmouseover="this.style.background='#c4a565'" onmouseout="this.style.background='#8a6f3a'">☕ Support</a>
