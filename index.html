@@ -928,20 +928,35 @@ async function submitScore(name,country,flag,seconds){
   try{const res=await fetch(`${SUPA_URL}/rest/v1/daily_leaderboard`,{method:'POST',headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,'Content-Type':'application/json','Prefer':'return=minimal'},body:JSON.stringify({date:getTodayStr(),name,country,flag,time_seconds:seconds})});return res.ok||res.status===201;}catch(e){return false;}
 }
 const COUNTRIES=[
-  {name:'Afghanistan',flag:'🇦🇫'},{name:'Albania',flag:'🇦🇱'},{name:'Algeria',flag:'🇩🇿'},{name:'Argentina',flag:'🇦🇷'},
-  {name:'Australia',flag:'🇦🇺'},{name:'Austria',flag:'🇦🇹'},{name:'Belgium',flag:'🇧🇪'},{name:'Brazil',flag:'🇧🇷'},
-  {name:'Canada',flag:'🇨🇦'},{name:'Chile',flag:'🇨🇱'},{name:'China',flag:'🇨🇳'},{name:'Colombia',flag:'🇨🇴'},
-  {name:'Croatia',flag:'🇭🇷'},{name:'Czech Republic',flag:'🇨🇿'},{name:'Denmark',flag:'🇩🇰'},{name:'Egypt',flag:'🇪🇬'},
-  {name:'Finland',flag:'🇫🇮'},{name:'France',flag:'🇫🇷'},{name:'Germany',flag:'🇩🇪'},{name:'Greece',flag:'🇬🇷'},
-  {name:'Hong Kong',flag:'🇭🇰'},{name:'Hungary',flag:'🇭🇺'},{name:'India',flag:'🇮🇳'},{name:'Indonesia',flag:'🇮🇩'},
+  {name:'Afghanistan',flag:'🇦🇫'},{name:'Albania',flag:'🇦🇱'},{name:'Algeria',flag:'🇩🇿'},{name:'Angola',flag:'🇦🇴'},
+  {name:'Argentina',flag:'🇦🇷'},{name:'Armenia',flag:'🇦🇲'},{name:'Australia',flag:'🇦🇺'},{name:'Austria',flag:'🇦🇹'},
+  {name:'Azerbaijan',flag:'🇦🇿'},{name:'Bahrain',flag:'🇧🇭'},{name:'Bangladesh',flag:'🇧🇩'},{name:'Belarus',flag:'🇧🇾'},
+  {name:'Belgium',flag:'🇧🇪'},{name:'Bolivia',flag:'🇧🇴'},{name:'Bosnia & Herzegovina',flag:'🇧🇦'},{name:'Brazil',flag:'🇧🇷'},
+  {name:'Bulgaria',flag:'🇧🇬'},{name:'Cambodia',flag:'🇰🇭'},{name:'Canada',flag:'🇨🇦'},{name:'Chile',flag:'🇨🇱'},
+  {name:'China',flag:'🇨🇳'},{name:'Colombia',flag:'🇨🇴'},{name:'Costa Rica',flag:'🇨🇷'},{name:'Croatia',flag:'🇭🇷'},
+  {name:'Cuba',flag:'🇨🇺'},{name:'Cyprus',flag:'🇨🇾'},{name:'Czech Republic',flag:'🇨🇿'},{name:'Denmark',flag:'🇩🇰'},
+  {name:'Dominican Republic',flag:'🇩🇴'},{name:'Ecuador',flag:'🇪🇨'},{name:'Egypt',flag:'🇪🇬'},{name:'Estonia',flag:'🇪🇪'},
+  {name:'Ethiopia',flag:'🇪🇹'},{name:'Finland',flag:'🇫🇮'},{name:'France',flag:'🇫🇷'},{name:'Georgia',flag:'🇬🇪'},
+  {name:'Germany',flag:'🇩🇪'},{name:'Ghana',flag:'🇬🇭'},{name:'Greece',flag:'🇬🇷'},{name:'Guatemala',flag:'🇬🇹'},
+  {name:'Honduras',flag:'🇭🇳'},{name:'Hong Kong',flag:'🇭🇰'},{name:'Hungary',flag:'🇭🇺'},{name:'Iceland',flag:'🇮🇸'},
+  {name:'India',flag:'🇮🇳'},{name:'Indonesia',flag:'🇮🇩'},{name:'Iran',flag:'🇮🇷'},{name:'Iraq',flag:'🇮🇶'},
   {name:'Ireland',flag:'🇮🇪'},{name:'Israel',flag:'🇮🇱'},{name:'Italy',flag:'🇮🇹'},{name:'Japan',flag:'🇯🇵'},
-  {name:'South Korea',flag:'🇰🇷'},{name:'Malaysia',flag:'🇲🇾'},{name:'Mexico',flag:'🇲🇽'},{name:'Netherlands',flag:'🇳🇱'},
-  {name:'New Zealand',flag:'🇳🇿'},{name:'Nigeria',flag:'🇳🇬'},{name:'Norway',flag:'🇳🇴'},{name:'Pakistan',flag:'🇵🇰'},
-  {name:'Philippines',flag:'🇵🇭'},{name:'Poland',flag:'🇵🇱'},{name:'Portugal',flag:'🇵🇹'},{name:'Romania',flag:'🇷🇴'},
-  {name:'Russia',flag:'🇷🇺'},{name:'Saudi Arabia',flag:'🇸🇦'},{name:'Singapore',flag:'🇸🇬'},{name:'South Africa',flag:'🇿🇦'},
-  {name:'Spain',flag:'🇪🇸'},{name:'Sweden',flag:'🇸🇪'},{name:'Switzerland',flag:'🇨🇭'},{name:'Taiwan',flag:'🇹🇼'},
-  {name:'Thailand',flag:'🇹🇭'},{name:'Turkey',flag:'🇹🇷'},{name:'Ukraine',flag:'🇺🇦'},{name:'United Arab Emirates',flag:'🇦🇪'},
-  {name:'United Kingdom',flag:'🇬🇧'},{name:'United States',flag:'🇺🇸'},{name:'Vietnam',flag:'🇻🇳'},{name:'Other',flag:'🌍'}
+  {name:'Jordan',flag:'🇯🇴'},{name:'Kazakhstan',flag:'🇰🇿'},{name:'Kenya',flag:'🇰🇪'},{name:'Kuwait',flag:'🇰🇼'},
+  {name:'Latvia',flag:'🇱🇻'},{name:'Lebanon',flag:'🇱🇧'},{name:'Libya',flag:'🇱🇾'},{name:'Lithuania',flag:'🇱🇹'},
+  {name:'Luxembourg',flag:'🇱🇺'},{name:'Macau',flag:'🇲🇴'},{name:'Malaysia',flag:'🇲🇾'},{name:'Malta',flag:'🇲🇹'},
+  {name:'Mexico',flag:'🇲🇽'},{name:'Moldova',flag:'🇲🇩'},{name:'Mongolia',flag:'🇲🇳'},{name:'Morocco',flag:'🇲🇦'},
+  {name:'Myanmar',flag:'🇲🇲'},{name:'Nepal',flag:'🇳🇵'},{name:'Netherlands',flag:'🇳🇱'},{name:'New Zealand',flag:'🇳🇿'},
+  {name:'Nigeria',flag:'🇳🇬'},{name:'North Macedonia',flag:'🇲🇰'},{name:'Norway',flag:'🇳🇴'},{name:'Oman',flag:'🇴🇲'},
+  {name:'Pakistan',flag:'🇵🇰'},{name:'Panama',flag:'🇵🇦'},{name:'Paraguay',flag:'🇵🇾'},{name:'Peru',flag:'🇵🇪'},
+  {name:'Philippines',flag:'🇵🇭'},{name:'Poland',flag:'🇵🇱'},{name:'Portugal',flag:'🇵🇹'},{name:'Qatar',flag:'🇶🇦'},
+  {name:'Romania',flag:'🇷🇴'},{name:'Russia',flag:'🇷🇺'},{name:'Saudi Arabia',flag:'🇸🇦'},{name:'Serbia',flag:'🇷🇸'},
+  {name:'Singapore',flag:'🇸🇬'},{name:'Slovakia',flag:'🇸🇰'},{name:'Slovenia',flag:'🇸🇮'},{name:'South Africa',flag:'🇿🇦'},
+  {name:'South Korea',flag:'🇰🇷'},{name:'Spain',flag:'🇪🇸'},{name:'Sri Lanka',flag:'🇱🇰'},{name:'Sweden',flag:'🇸🇪'},
+  {name:'Switzerland',flag:'🇨🇭'},{name:'Taiwan',flag:'🇹🇼'},{name:'Thailand',flag:'🇹🇭'},{name:'Tunisia',flag:'🇹🇳'},
+  {name:'Turkey',flag:'🇹🇷'},{name:'Uganda',flag:'🇺🇬'},{name:'Ukraine',flag:'🇺🇦'},{name:'United Arab Emirates',flag:'🇦🇪'},
+  {name:'United Kingdom',flag:'🇬🇧'},{name:'United States',flag:'🇺🇸'},{name:'Uruguay',flag:'🇺🇾'},{name:'Uzbekistan',flag:'🇺🇿'},
+  {name:'Venezuela',flag:'🇻🇪'},{name:'Vietnam',flag:'🇻🇳'},{name:'Yemen',flag:'🇾🇪'},{name:'Zimbabwe',flag:'🇿🇼'},
+  {name:'Other',flag:'🌍'}
 ];
 function lbFormHTML(sfx){
   if(hasSubmittedToday())return '<div class="lb-submitted">✓ Score submitted</div>';
