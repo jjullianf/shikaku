@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-45EFHESZW4"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag("js", new Date());
+  gtag("config", "G-45EFHESZW4");
+</script>
+<!-- Google AdSense -->
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1892773925409513" crossorigin="anonymous"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Shikaku Archive — Past Daily Puzzles</title>
+<meta name="description" content="Play past Shikaku daily puzzles. Browse the archive, replay any day's challenge, and see the leaderboard records for each date.">
+<meta name="keywords" content="shikaku archive, past shikaku puzzles, shikaku daily archive, old shikaku puzzles, shikaku history">
+<meta property="og:title" content="Shikaku Archive — Past Daily Puzzles">
+<meta property="og:description" content="Replay any past Shikaku daily puzzle and see the leaderboard records for each date.">
+<meta property="og:url" content="https://shikaku.ch/archive.html">
+<meta property="og:type" content="website">
+<link rel="canonical" href="https://shikaku.ch/archive.html">
+<link rel="shortcut icon" href="favicon.ico">
+<link rel="icon" type="image/png" href="favicon.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500;600&family=Noto+Serif+JP:wght@300;400&display=swap">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--ink:#1a1916;--ink2:#4a4840;--ink3:#8a8880;--paper:#faf9f5;--paper2:#f0ede5;--paper3:#e8e4d8;--gold:#8a6f3a;--gold2:#c4a565;--border:rgba(26,25,22,0.12);--shadow:0 2px 20px rgba(26,25,22,0.08);--r:4px;--t:0.18s ease}
+@media(prefers-color-scheme:dark){:root{--ink:#e8e6de;--ink2:#a8a69e;--ink3:#686660;--paper:#111110;--paper2:#1a1918;--paper3:#222120;--gold:#c4a565;--gold2:#8a6f3a;--border:rgba(232,230,222,0.1);--shadow:0 2px 20px rgba(0,0,0,0.3)}}
+html{font-size:16px}
+body{font-family:'DM Mono',monospace;background:var(--paper);color:var(--ink);min-height:100vh;-webkit-font-smoothing:antialiased}
+nav{position:fixed;top:0;left:0;right:0;z-index:100;background:var(--paper);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 16px 0 24px;height:56px;gap:12px}
+.nav-logo{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--ink);flex-shrink:0}
+.nav-logo-icon{width:34px;height:34px;flex-shrink:0}
+.nav-logo-text{font-family:'Noto Serif JP',serif;font-weight:300;font-size:1.1rem;letter-spacing:.12em}
+.nav-logo-text span{color:var(--gold)}
+.nav-links{display:flex;gap:24px;list-style:none;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;flex:1;justify-content:flex-end}
+.nav-links::-webkit-scrollbar{display:none}
+.nav-links li{flex-shrink:0}
+.nav-links a{font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;color:var(--ink2);text-decoration:none;transition:color var(--t);white-space:nowrap}
+.nav-links a:hover,.nav-links a.active{color:var(--gold)}
+@media(max-width:480px){.nav-logo-text{display:none}}
+main{padding-top:56px;min-height:100vh}
+
+/* ── Layout ── */
+.page{max-width:1200px;margin:0 auto;padding:40px 24px 80px}
+.page-header{text-align:center;margin-bottom:36px}
+.page-header h1{font-family:'Noto Serif JP',serif;font-weight:300;font-size:1.6rem;letter-spacing:.08em;margin-bottom:8px}
+.page-header p{font-size:.78rem;color:var(--ink3);letter-spacing:.06em}
+.badge{display:inline-block;font-size:.65rem;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);border:1px solid var(--gold2);padding:3px 10px;border-radius:2px;margin-bottom:14px;opacity:.8}
+
+/* ── Archive list view ── */
+#archive-view{}
+.archive-list{display:flex;flex-direction:column;gap:6px;max-width:640px;margin:0 auto}
+.archive-row{display:grid;grid-template-columns:1fr auto auto;align-items:center;gap:12px;padding:12px 16px;border:1px solid var(--border);border-radius:var(--r);background:var(--paper2);cursor:pointer;transition:all var(--t);text-decoration:none;color:inherit}
+.archive-row:hover{background:var(--paper3);border-color:var(--gold2)}
+.archive-row.today-row{border-color:var(--gold2);background:rgba(138,111,58,0.06)}
+.archive-date{font-size:.8rem;letter-spacing:.06em;color:var(--ink)}
+.archive-date-sub{font-size:.62rem;color:var(--ink3);letter-spacing:.04em;margin-top:2px}
+.archive-record{font-size:.72rem;color:var(--gold);font-variant-numeric:tabular-nums;letter-spacing:.04em;text-align:right;white-space:nowrap}
+.archive-record-lbl{font-size:.58rem;color:var(--ink3);letter-spacing:.06em;text-transform:uppercase;text-align:right}
+.archive-arrow{font-size:.8rem;color:var(--ink3);transition:color var(--t)}
+.archive-row:hover .archive-arrow{color:var(--gold)}
+.archive-loading{text-align:center;padding:40px;font-size:.78rem;color:var(--ink3);letter-spacing:.06em}
+.archive-empty{font-size:.72rem;color:var(--ink3);text-align:center;padding:20px;letter-spacing:.04em}
+.no-record{font-size:.72rem;color:var(--ink3);font-variant-numeric:tabular-nums}
+
+/* ── Puzzle view ── */
+#puzzle-view{display:none}
+.back-btn{display:inline-flex;align-items:center;gap:8px;font-family:'DM Mono',monospace;font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;padding:8px 16px;border:1px solid var(--border);background:var(--paper2);color:var(--ink2);cursor:pointer;border-radius:var(--r);transition:all var(--t);margin-bottom:28px}
+.back-btn:hover{background:var(--paper3);color:var(--ink);border-color:var(--gold2)}
+.puzzle-header{text-align:center;margin-bottom:24px}
+.puzzle-header h2{font-family:'Noto Serif JP',serif;font-weight:300;font-size:1.3rem;letter-spacing:.08em;margin-bottom:6px}
+.puzzle-header p{font-size:.72rem;color:var(--ink3);letter-spacing:.06em}
+
+.puzzle-layout{display:flex;gap:32px;align-items:flex-start;justify-content:center}
+.puzzle-main{flex:1;min-width:0;max-width:580px}
+.puzzle-lb-col{width:220px;flex-shrink:0}
+@media(max-width:860px){.puzzle-layout{flex-direction:column;align-items:center}.puzzle-lb-col{width:100%;max-width:580px}}
+
+.game-area{display:flex;flex-direction:column;align-items:center;gap:18px}
+.game-meta{display:flex;justify-content:space-between;align-items:center;width:100%;max-width:580px;font-size:.72rem;color:var(--ink3);letter-spacing:.08em}
+.timer{font-variant-numeric:tabular-nums;color:var(--ink2)}
+.canvas-wrap{position:relative;width:100%;max-width:580px;border-radius:var(--r);box-shadow:var(--shadow);background:var(--paper2);touch-action:none;cursor:crosshair;display:block}
+.canvas-wrap canvas{display:block;max-width:100%}
+.game-hint{font-size:.68rem;color:var(--ink3);letter-spacing:.06em;text-align:center;opacity:.7}
+.btn{display:inline-flex;align-items:center;gap:8px;font-family:'DM Mono',monospace;font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;padding:10px 22px;border:1px solid var(--border);background:var(--paper2);color:var(--ink2);cursor:pointer;border-radius:var(--r);transition:all var(--t);text-decoration:none}
+.btn:hover{background:var(--paper3);color:var(--ink);border-color:var(--gold2)}
+.btn-primary{background:var(--gold)!important;color:var(--paper)!important;border-color:var(--gold)!important}
+.btn-primary:hover{background:var(--gold2)!important;border-color:var(--gold2)!important}
+.game-controls{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;align-items:center}
+
+/* ── Leaderboard (archive) ── */
+.lb-box{background:var(--paper2);border:1px solid var(--border);border-radius:var(--r);padding:16px;position:sticky;top:72px}
+.lb-title{font-family:'Noto Serif JP',serif;font-weight:300;font-size:.85rem;letter-spacing:.1em;color:var(--ink);margin-bottom:4px;text-align:center}
+.lb-date{font-size:.6rem;color:var(--ink3);letter-spacing:.08em;text-align:center;margin-bottom:12px;text-transform:uppercase}
+.lb-list{list-style:none;display:flex;flex-direction:column;gap:4px;margin-bottom:4px;min-height:40px}
+.lb-row{display:grid;grid-template-columns:18px 1fr auto;gap:6px;align-items:center;font-size:.68rem;letter-spacing:.03em;padding:5px 6px;border-radius:3px}
+.lb-row:nth-child(1){background:rgba(196,165,101,.15)}
+.lb-row:nth-child(2){background:rgba(196,165,101,.08)}
+.lb-row:nth-child(3){background:rgba(196,165,101,.05)}
+.lb-rank{color:var(--gold);font-size:.62rem;text-align:center}
+.lb-name{color:var(--ink2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lb-time{color:var(--gold);font-variant-numeric:tabular-nums;white-space:nowrap}
+.lb-empty{font-size:.7rem;color:var(--ink3);text-align:center;padding:12px 0;letter-spacing:.04em}
+.lb-note{font-size:.62rem;color:var(--ink3);text-align:center;padding:8px 0;letter-spacing:.04em;border-top:1px solid var(--border);margin-top:8px}
+
+/* ── Win overlay ── */
+.win-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;z-index:200;opacity:0;pointer-events:none;transition:opacity .4s ease}
+.win-overlay.show{opacity:1;pointer-events:all}
+.win-card{background:var(--paper);border:1px solid var(--border);padding:48px 56px;text-align:center;border-radius:var(--r);box-shadow:0 8px 60px rgba(0,0,0,.2);max-width:360px;width:90%;transform:translateY(16px);transition:transform .4s ease}
+.win-overlay.show .win-card{transform:translateY(0)}
+.kigo{font-size:2.5rem;margin-bottom:16px;display:block}
+.win-card h2{font-family:'Noto Serif JP',serif;font-weight:300;font-size:1.4rem;letter-spacing:.1em;margin-bottom:8px}
+.win-card p{font-size:.78rem;color:var(--ink3);letter-spacing:.06em;margin-bottom:28px}
+.time-display{font-size:2rem;font-weight:300;color:var(--gold);margin-bottom:28px;display:block}
+.win-card-btns{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.page>*{animation:fadeUp .35s ease both}
+.page>*:nth-child(1){animation-delay:.0s}.page>*:nth-child(2){animation-delay:.05s}.page>*:nth-child(3){animation-delay:.1s}
+@media(max-width:560px){nav{padding:0 16px}.nav-links{gap:18px}.page{padding:28px 16px 60px}.win-card{padding:36px 28px}}
+</style>
+</head>
+<body>
+<nav>
+  <a href="index.html" class="nav-logo">
+    <svg class="nav-logo-icon" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg">
+      <rect width="60" height="60" rx="6" fill="currentColor"/>
+      <rect x="3" y="3" width="54" height="17" rx="3" fill="white"/>
+      <rect x="3" y="22" width="17" height="35" rx="3" fill="white"/>
+      <rect x="22" y="22" width="35" height="17" rx="3" fill="white"/>
+      <rect x="22" y="41" width="17" height="16" rx="3" fill="white"/>
+      <rect x="41" y="41" width="16" height="16" rx="3" fill="white"/>
+    </svg>
+    <span class="nav-logo-text"><span>shikaku</span></span>
+  </a>
+  <ul class="nav-links">
+    <li><a href="index.html">Daily</a></li>
+    <li><a href="play.html">Play</a></li>
+    <li><a href="archive.html" class="active">Archive</a></li>
+    <li><a href="support.html">Support</a></li>
+    <li><a href="about.html">About</a></li>
+    <li><a href="guide.html">Guide</a></li>
+  </ul>
+</nav>
+<main>
+<div class="page">
+
+  <!-- Archive list view -->
+  <div id="archive-view">
+    <div class="page-header">
+      <div class="badge">— archive —</div>
+      <h1>Past Daily Puzzles</h1>
+      <p>Replay any day's challenge · Leaderboard records shown</p>
+    </div>
+    <div class="archive-list" id="archive-list">
+      <div class="archive-loading">Loading archive…</div>
+    </div>
+  </div>
+
+  <!-- Puzzle view (hidden until date selected) -->
+  <div id="puzzle-view">
+    <button class="back-btn" id="back-btn">← Back to archive</button>
+    <div class="puzzle-header">
+      <div class="badge" id="puzzle-badge">—</div>
+      <h2 id="puzzle-title">Daily Puzzle</h2>
+      <p>Archive replay · Your time is not submitted to the leaderboard</p>
+    </div>
+    <div class="puzzle-layout">
+      <div class="puzzle-main">
+        <div class="game-area">
+          <div class="game-meta">
+            <span>10 × 10</span>
+            <span class="timer" id="arc-timer">0:00</span>
+          </div>
+          <div class="canvas-wrap" id="arc-canvas-wrap">
+            <canvas id="arc-canvas"></canvas>
+          </div>
+          <div class="game-controls">
+            <button class="btn" id="arc-reset-btn">↺ Reset</button>
+            <button class="btn btn-primary" id="arc-new-btn">New puzzle</button>
+          </div>
+          <p class="game-hint">Drag to draw · Click to place 1 · Right-click or click existing to erase</p>
+        </div>
+      </div>
+      <div class="puzzle-lb-col">
+        <div class="lb-box" id="arc-lb-box">
+          <div class="lb-title">Leaderboard</div>
+          <div class="lb-date" id="arc-lb-date">—</div>
+          <ul class="lb-list" id="arc-lb-list"><li class="lb-empty">Loading…</li></ul>
+          <div class="lb-note">Archive replay — scores not submitted</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</main>
+
+<!-- Win overlay -->
+<div class="win-overlay" id="win-overlay">
+  <div class="win-card">
+    <span class="kigo">◈</span>
+    <h2>Solved</h2>
+    <p id="win-subtitle">Archive puzzle complete</p>
+    <span class="time-display" id="win-time">—</span>
+    <div class="win-card-btns">
+      <button class="btn btn-primary" id="win-again-btn">↺ Play again</button>
+      <button class="btn" id="win-back-btn">← Archive</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── PUZZLE GENERATOR (identical to index.html) ───────────────────────────────
+function mulberry32(seed){return function(){seed|=0;seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296};}
+function maxRectArea(rows,cols){const c=rows*cols;if(c<=25)return 6;if(c<=100)return 10;if(c<=400)return 32;return 52;}
+function generatePuzzle(rows,cols,seed){
+  const rng=mulberry32(seed),maxArea=maxRectArea(rows,cols);
+  const grid=Array.from({length:rows},()=>new Array(cols).fill(-1));
+  const rects=[];
+  while(true){
+    let sr=-1,sc=-1;
+    outer:for(let r=0;r<rows;r++)for(let c=0;c<cols;c++)if(grid[r][c]===-1){sr=r;sc=c;break outer;}
+    if(sr===-1)break;
+    const maxH=Math.min(rows-sr,maxArea),maxW=Math.min(cols-sc,maxArea);
+    const cands=[];
+    for(let h=1;h<=maxH;h++)for(let w=1;w<=maxW;w++)if(h*w<=maxArea)cands.push([h,w]);
+    for(let i=cands.length-1;i>0;i--){const j=Math.floor(rng()*(i+1));[cands[i],cands[j]]=[cands[j],cands[i]];}
+    for(const[h,w]of cands){
+      let fits=true;
+      for(let r=sr;r<sr+h&&fits;r++)for(let c=sc;c<sc+w&&fits;c++)if(grid[r][c]!==-1)fits=false;
+      if(!fits)continue;
+      const id=rects.length;
+      const clueR=sr+Math.floor(rng()*h),clueC=sc+Math.floor(rng()*w);
+      for(let r=sr;r<sr+h;r++)for(let c=sc;c<sc+w;c++)grid[r][c]=id;
+      rects.push({r1:sr,c1:sc,r2:sr+h-1,c2:sc+w-1,clueR,clueC,area:h*w});
+      break;
+    }
+  }
+  for(let i=0;i<rects.length;i++){
+    const p=rects[i];
+    if(!p||p.area!==1)continue;
+    const r=p.r1,c=p.c1;
+    const dirs=[[0,1],[1,0],[0,-1],[-1,0]];
+    for(const[dr,dc]of dirs){
+      const nr=r+dr,nc=c+dc;
+      if(nr<0||nr>=rows||nc<0||nc>=cols)continue;
+      const nid=grid[nr][nc];
+      if(nid===i||nid===-1)continue;
+      const n=rects[nid];
+      if(!n||n.area>=maxArea)continue;
+      const mr1=Math.min(p.r1,n.r1),mc1=Math.min(p.c1,n.c1);
+      const mr2=Math.max(p.r2,n.r2),mc2=Math.max(p.c2,n.c2);
+      const newArea=(mr2-mr1+1)*(mc2-mc1+1);
+      if(newArea>maxArea)continue;
+      let valid=true;
+      for(let mr=mr1;mr<=mr2&&valid;mr++)for(let mc=mc1;mc<=mc2&&valid;mc++)if(grid[mr][mc]!==i&&grid[mr][mc]!==nid)valid=false;
+      if(!valid)continue;
+      n.r1=mr1;n.c1=mc1;n.r2=mr2;n.c2=mc2;n.area=newArea;
+      for(let mr=mr1;mr<=mr2;mr++)for(let mc=mc1;mc<=mc2;mc++)grid[mr][mc]=nid;
+      rects[i]=null;
+      break;
+    }
+  }
+  const clues=Array.from({length:rows},()=>new Array(cols).fill(0));
+  const solution=rects.filter(r=>r!==null);
+  for(const rect of solution)clues[rect.clueR][rect.clueC]=rect.area;
+  return{rows,cols,clues,solution,grid};
+}
+
+// ── GAME ENGINE (identical to index.html) ────────────────────────────────────
+const BASE_CELL=52;
+class ShikakuGame{
+  constructor(puzzle,canvas,wrap){
+    this.puzzle=puzzle;this.canvas=canvas;this.wrap=wrap;
+    this.ctx=canvas.getContext('2d');
+    this.playerRects=[];this.solved=false;this.startTime=Date.now();this.onSolve=null;
+    this.zoom=1;this.panX=0;this.panY=0;
+    this.mode='idle';this.drawStart=null;this.drawCurrent=null;this.preview=null;
+    this.pointerMoved=false;this.pointerDownPos=null;
+    this._setupCanvas();this._bindEvents();this._fitToWrap();this.render();
+  }
+  _setupCanvas(){
+    const dpr=window.devicePixelRatio||1;
+    const w=this.wrap.clientWidth||560;
+    const h=Math.min(Math.max(w*0.75,300),window.innerHeight-280);
+    this.wrap.style.height=h+'px';
+    this.canvas.width=w*dpr;this.canvas.height=h*dpr;
+    this.ctx.setTransform(dpr,0,0,dpr,0,0);
+    this._W=w;this._H=h;
+  }
+  _fitToWrap(){
+    const{rows,cols}=this.puzzle;
+    const puzzleW=cols*BASE_CELL,puzzleH=rows*BASE_CELL;
+    const fitZoom=Math.min(this._W/puzzleW,this._H/puzzleH)*0.96;
+    this.zoom=fitZoom;
+    this.panX=(this._W-puzzleW*this.zoom)/2;
+    this.panY=(this._H-puzzleH*this.zoom)/2;
+  }
+  _screenToWorld(sx,sy){return{x:(sx-this.panX)/this.zoom,y:(sy-this.panY)/this.zoom};}
+  _worldToCell(wx,wy){
+    const c=Math.floor(wx/BASE_CELL),r=Math.floor(wy/BASE_CELL);
+    const{rows,cols}=this.puzzle;
+    if(r<0||r>=rows||c<0||c>=cols)return null;
+    return{r,c};
+  }
+  _screenToCell(sx,sy){const w=this._screenToWorld(sx,sy);return this._worldToCell(w.x,w.y);}
+  _evPos(e,touch){
+    const rect=this.canvas.getBoundingClientRect();
+    const src=touch||(e.touches?e.touches[0]:e);
+    return{x:src.clientX-rect.left,y:src.clientY-rect.top};
+  }
+  _clampPan(){
+    const{rows,cols}=this.puzzle;
+    const pw=cols*BASE_CELL*this.zoom,ph=rows*BASE_CELL*this.zoom;
+    const minVisible=0.5;
+    this.panX=Math.max(-(pw*(1-minVisible)),Math.min(this._W*minVisible,this.panX));
+    this.panY=Math.max(-(ph*(1-minVisible)),Math.min(this._H*minVisible,this.panY));
+  }
+  _rectIsValid(p){
+    const clues=this.puzzle.clues;
+    const area=(p.r2-p.r1+1)*(p.c2-p.c1+1);
+    let cnt=0,val=0;
+    for(let r=p.r1;r<=p.r2;r++)for(let c=p.c1;c<=p.c2;c++)if(clues[r][c]>0){cnt++;val=clues[r][c];}
+    return cnt===1&&val===area;
+  }
+  _rectAt(r,c){return this.playerRects.find(p=>p.r1<=r&&p.r2>=r&&p.c1<=c&&p.c2>=c)||null;}
+  placeRect(r1,c1,r2,c2){
+    this.playerRects=this.playerRects.filter(p=>!(p.r1<=r2&&p.r2>=r1&&p.c1<=c2&&p.c2>=c1));
+    this.playerRects.push({r1,c1,r2,c2});
+    this.render();this._checkSolution();
+  }
+  eraseAt(r,c){
+    this.playerRects=this.playerRects.filter(p=>!(p.r1<=r&&p.r2>=r&&p.c1<=c&&p.c2>=c));
+    this.render();
+  }
+  _checkSolution(){
+    const{rows,cols,clues}=this.puzzle;
+    const cov=Array.from({length:rows},()=>new Array(cols).fill(0));
+    for(const p of this.playerRects)for(let r=p.r1;r<=p.r2;r++)for(let c=p.c1;c<=p.c2;c++)cov[r][c]++;
+    for(let r=0;r<rows;r++)for(let c=0;c<cols;c++)if(cov[r][c]!==1)return;
+    for(const p of this.playerRects)if(!this._rectIsValid(p))return;
+    this.solved=true;this.render();
+    if(this.onSolve)this.onSolve(Math.floor((Date.now()-this.startTime)/1000));
+  }
+  reset(){this.playerRects=[];this.solved=false;this.startTime=Date.now();this.mode='idle';this.preview=null;this.render();}
+  resize(){
+    const dpr=window.devicePixelRatio||1;
+    const w=this.wrap.clientWidth||560;
+    const h=Math.min(Math.max(w*0.75,300),window.innerHeight-280);
+    this.wrap.style.height=h+'px';
+    this.canvas.width=w*dpr;this.canvas.height=h*dpr;
+    this.ctx.scale(dpr,dpr);
+    this._W=w;this._H=h;this._fitToWrap();this.render();
+  }
+  _bindEvents(){
+    const c=this.canvas;
+    c.addEventListener('mousedown',e=>{
+      if(e.button!==0||this.solved)return;
+      const pos=this._evPos(e);this.pointerDownPos=pos;this.pointerMoved=false;
+      const cell=this._screenToCell(pos.x,pos.y);if(!cell)return;
+      const existing=this._rectAt(cell.r,cell.c);
+      if(existing&&!this._rectIsValid(existing)){this.eraseAt(cell.r,cell.c);this.pointerDownPos=null;return;}
+      this.mode='draw';this.drawStart=cell;this.drawCurrent=cell;
+      this.preview={r1:cell.r,c1:cell.c,r2:cell.r,c2:cell.c};this.render();
+    });
+    c.addEventListener('mousemove',e=>{
+      if(this.mode==='idle')return;
+      const pos=this._evPos(e);
+      if(this.pointerDownPos){const dx=pos.x-this.pointerDownPos.x,dy=pos.y-this.pointerDownPos.y;if(Math.hypot(dx,dy)>4)this.pointerMoved=true;}
+      if(this.mode==='draw'&&this.drawStart){
+        const cell=this._screenToCell(pos.x,pos.y);
+        if(cell){
+          this.drawCurrent=cell;
+          this.preview={r1:Math.min(this.drawStart.r,cell.r),c1:Math.min(this.drawStart.c,cell.c),r2:Math.max(this.drawStart.r,cell.r),c2:Math.max(this.drawStart.c,cell.c)};
+          this.render();
+        }
+      }
+    });
+    c.addEventListener('mouseup',e=>{
+      if(this.mode==='draw'&&this.drawStart){
+        if(!this.pointerMoved){
+          const existing=this._rectAt(this.drawStart.r,this.drawStart.c);
+          if(existing)this.eraseAt(this.drawStart.r,this.drawStart.c);
+          else this.placeRect(this.drawStart.r,this.drawStart.c,this.drawStart.r,this.drawStart.c);
+        }else if(this.preview)this.placeRect(this.preview.r1,this.preview.c1,this.preview.r2,this.preview.c2);
+      }
+      this.mode='idle';this.drawStart=null;this.drawCurrent=null;this.preview=null;this.pointerDownPos=null;this.render();
+    });
+    c.addEventListener('mouseleave',e=>{
+      if(this.mode==='draw'&&this.preview)this.placeRect(this.preview.r1,this.preview.c1,this.preview.r2,this.preview.c2);
+      this.mode='idle';this.drawStart=null;this.preview=null;this.render();
+    });
+    c.addEventListener('contextmenu',e=>{
+      e.preventDefault();const pos=this._evPos(e);const cell=this._screenToCell(pos.x,pos.y);
+      if(cell)this.eraseAt(cell.r,cell.c);
+    });
+    let lastTouches=null;
+    c.addEventListener('touchstart',e=>{
+      e.preventDefault();const ts=e.touches;
+      if(ts.length===1&&!this.solved){
+        const pos=this._evPos(e,ts[0]);this.pointerDownPos=pos;this.pointerMoved=false;lastTouches=null;
+        const cell=this._screenToCell(pos.x,pos.y);if(!cell)return;
+        const existing=this._rectAt(cell.r,cell.c);
+        if(existing&&!this._rectIsValid(existing)){this.eraseAt(cell.r,cell.c);this.pointerDownPos=null;return;}
+        this.mode='draw';this.drawStart=cell;this.drawCurrent=cell;
+        this.preview={r1:cell.r,c1:cell.c,r2:cell.r,c2:cell.c};this.render();
+      }
+    },{passive:false});
+    c.addEventListener('touchmove',e=>{
+      e.preventDefault();const ts=e.touches;
+      if(ts.length===2){this.mode='idle';this.preview=null;lastTouches=null;this.render();return;}
+      if(ts.length===1){
+        const pos=this._evPos(e,ts[0]);
+        if(this.pointerDownPos){const dx=pos.x-this.pointerDownPos.x,dy=pos.y-this.pointerDownPos.y;if(Math.hypot(dx,dy)>5)this.pointerMoved=true;}
+        if(this.mode==='draw'&&this.drawStart){
+          const cell=this._screenToCell(pos.x,pos.y);
+          if(cell){
+            this.drawCurrent=cell;
+            this.preview={r1:Math.min(this.drawStart.r,cell.r),c1:Math.min(this.drawStart.c,cell.c),r2:Math.max(this.drawStart.r,cell.r),c2:Math.max(this.drawStart.c,cell.c)};
+            this.render();
+          }
+        }
+      }
+    },{passive:false});
+    c.addEventListener('touchend',e=>{
+      e.preventDefault();
+      if(e.touches.length===0){
+        if(this.mode==='draw'&&this.drawStart){
+          if(!this.pointerMoved){
+            const existing=this._rectAt(this.drawStart.r,this.drawStart.c);
+            if(existing)this.eraseAt(this.drawStart.r,this.drawStart.c);
+            else this.placeRect(this.drawStart.r,this.drawStart.c,this.drawStart.r,this.drawStart.c);
+          }else if(this.preview)this.placeRect(this.preview.r1,this.preview.c1,this.preview.r2,this.preview.c2);
+        }
+        this.mode='idle';this.drawStart=null;this.preview=null;this.pointerDownPos=null;lastTouches=null;this.render();
+      }else if(e.touches.length===1){this.mode='idle';lastTouches=null;}
+    },{passive:false});
+  }
+  render(){
+    const ctx=this.ctx;
+    const{rows,cols,clues}=this.puzzle;
+    const W=this._W,H=this._H,cs=BASE_CELL;
+    const dk=window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const C=dk?{
+      bg:'#111110',grid:'rgba(255,255,255,0.07)',gridB:'rgba(255,255,255,0.13)',
+      clue:'#f0ede0',rf:'rgba(180,160,100,0.16)',rs:'rgba(210,185,110,0.85)',
+      ef:'rgba(200,70,70,0.13)',es:'rgba(220,80,80,0.7)',
+      pf:'rgba(160,145,100,0.22)',ps:'rgba(200,180,100,0.6)',
+      sf:'rgba(70,160,95,0.18)',ss:'rgba(70,190,110,0.85)',
+    }:{
+      bg:'#faf9f5',grid:'rgba(0,0,0,0.07)',gridB:'rgba(0,0,0,0.13)',
+      clue:'#1a1916',rf:'rgba(130,105,35,0.1)',rs:'rgba(100,78,22,0.75)',
+      ef:'rgba(195,55,55,0.09)',es:'rgba(195,55,55,0.65)',
+      pf:'rgba(100,85,40,0.14)',ps:'rgba(100,78,22,0.5)',
+      sf:'rgba(45,135,75,0.13)',ss:'rgba(45,135,75,0.7)',
+    };
+    ctx.clearRect(0,0,W,H);ctx.fillStyle=C.bg;ctx.fillRect(0,0,W,H);
+    ctx.save();ctx.translate(this.panX,this.panY);ctx.scale(this.zoom,this.zoom);
+    const PW=cols*cs,PH=rows*cs;
+    ctx.fillStyle=C.bg;ctx.fillRect(0,0,PW,PH);
+    for(const p of this.playerRects){
+      const valid=this._rectIsValid(p);
+      const fill=this.solved?C.sf:(valid?C.rf:C.ef);
+      const stroke=this.solved?C.ss:(valid?C.rs:C.es);
+      const x=p.c1*cs,y=p.r1*cs,w=(p.c2-p.c1+1)*cs,h=(p.r2-p.r1+1)*cs;
+      ctx.fillStyle=fill;ctx.fillRect(x+1,y+1,w-2,h-2);
+      ctx.strokeStyle=stroke;ctx.lineWidth=2/this.zoom;
+      ctx.strokeRect(x+1.5/this.zoom,y+1.5/this.zoom,w-3/this.zoom,h-3/this.zoom);
+    }
+    if(this.preview){
+      const{r1,c1,r2,c2}=this.preview;
+      const x=c1*cs,y=r1*cs,w=(c2-c1+1)*cs,h=(r2-r1+1)*cs;
+      const area=(c2-c1+1)*(r2-r1+1);
+      ctx.fillStyle=C.pf;ctx.fillRect(x,y,w,h);
+      ctx.strokeStyle=C.ps;ctx.lineWidth=2/this.zoom;
+      ctx.setLineDash([5/this.zoom,3/this.zoom]);
+      ctx.strokeRect(x+1/this.zoom,y+1/this.zoom,w-2/this.zoom,h-2/this.zoom);
+      ctx.setLineDash([]);
+      const lfs=Math.max(cs*0.55,14);
+      ctx.font=`700 ${lfs}px "DM Mono",monospace`;
+      const tw=ctx.measureText(String(area)).width;
+      const lx=x+w/2,ly=y+h/2,pad=lfs*0.3;
+      ctx.fillStyle=dk?'rgba(20,18,14,0.85)':'rgba(250,249,245,0.9)';
+      ctx.beginPath();ctx.roundRect(lx-tw/2-pad,ly-lfs/2-pad*0.8,tw+pad*2,lfs+pad*1.6,4);ctx.fill();
+      ctx.fillStyle=dk?'#c4a565':'#7a6030';
+      ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(String(area),lx,ly);
+    }
+    ctx.strokeStyle=C.grid;ctx.lineWidth=0.5/this.zoom;
+    for(let r=0;r<=rows;r++){if(r%5===0)continue;ctx.beginPath();ctx.moveTo(0,r*cs);ctx.lineTo(PW,r*cs);ctx.stroke();}
+    for(let c=0;c<=cols;c++){if(c%5===0)continue;ctx.beginPath();ctx.moveTo(c*cs,0);ctx.lineTo(c*cs,PH);ctx.stroke();}
+    ctx.strokeStyle=C.gridB;ctx.lineWidth=1/this.zoom;
+    for(let r=0;r<=rows;r++){if(r%5!==0)continue;ctx.beginPath();ctx.moveTo(0,r*cs);ctx.lineTo(PW,r*cs);ctx.stroke();}
+    for(let c=0;c<=cols;c++){if(c%5!==0)continue;ctx.beginPath();ctx.moveTo(c*cs,0);ctx.lineTo(c*cs,PH);ctx.stroke();}
+    ctx.strokeStyle=C.gridB;ctx.lineWidth=2/this.zoom;ctx.strokeRect(0,0,PW,PH);
+    const fs=Math.round(cs*0.48);
+    ctx.font=`600 ${fs}px "DM Mono",monospace`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle=C.clue;
+    for(let r=0;r<rows;r++)for(let c=0;c<cols;c++)if(clues[r][c]>0)ctx.fillText(clues[r][c],c*cs+cs/2,r*cs+cs/2);
+    ctx.restore();
+  }
+}
+
+// ── ARCHIVE PAGE LOGIC ───────────────────────────────────────────────────────
+const SUPA_URL='https://thxgpofgpeqtmhucouqq.supabase.co';
+const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRoeGdwb2ZncGVxdG1odWNvdXFxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwODMxNzcsImV4cCI6MjA5MTY1OTE3N30.oUCwQeLTi1MjOzpH_wRIR6W9v_ghElAGnDzBPuc4Qls';
+
+const MONTHS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const DAYS=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+
+function fmtTime(s){return `${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`;}
+
+function dateFromStr(str){
+  // str = "YYYY-MM-DD"
+  const[y,m,d]=str.split('-').map(Number);
+  return new Date(y,m-1,d);
+}
+
+function seedFromStr(str){
+  const[y,m,d]=str.split('-').map(Number);
+  return y*10000+m*100+d;
+}
+
+function formatDateLong(str){
+  const d=dateFromStr(str);
+  return `${DAYS[d.getDay()]}, ${MONTHS[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`;
+}
+
+function formatDateShort(str){
+  const d=dateFromStr(str);
+  return `${MONTHS[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`;
+}
+
+function getTodayStr(){
+  const d=new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+// Generate list of past dates from site launch (March 31, 2025) to yesterday
+function getPastDates(){
+  const launch=new Date(2025,2,31); // March 31, 2025
+  const today=new Date();
+  today.setHours(0,0,0,0);
+  const dates=[];
+  const cur=new Date(today);
+  cur.setDate(cur.getDate()-1); // start from yesterday
+  while(cur>=launch){
+    const y=cur.getFullYear();
+    const m=String(cur.getMonth()+1).padStart(2,'0');
+    const d=String(cur.getDate()).padStart(2,'0');
+    dates.push(`${y}-${m}-${d}`);
+    cur.setDate(cur.getDate()-1);
+  }
+  return dates;
+}
+
+// Fetch best (record) time for each date from leaderboard
+async function fetchRecords(dates){
+  if(!dates.length)return{};
+  // Fetch top 1 entry per date — we query all at once filtering by date range
+  const minDate=dates[dates.length-1];
+  const maxDate=dates[0];
+  try{
+    const res=await fetch(
+      `${SUPA_URL}/rest/v1/daily_leaderboard?date=gte.${minDate}&date=lte.${maxDate}&order=date.desc,time_seconds.asc`,
+      {headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY}}
+    );
+    if(!res.ok)return{};
+    const rows=await res.json();
+    // Keep only the best (first) entry per date
+    const records={};
+    for(const row of rows){
+      if(!records[row.date])records[row.date]=row;
+    }
+    return records;
+  }catch(e){return{};}
+}
+
+// Fetch full leaderboard for a specific date
+async function fetchDayLeaderboard(dateStr){
+  try{
+    const res=await fetch(
+      `${SUPA_URL}/rest/v1/daily_leaderboard?date=eq.${dateStr}&order=time_seconds.asc&limit=25`,
+      {headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY}}
+    );
+    return res.ok?await res.json():[];
+  }catch(e){return[];}
+}
+
+// ── Render archive list ──
+async function renderArchive(){
+  const list=document.getElementById('archive-list');
+  const dates=getPastDates();
+  if(!dates.length){
+    list.innerHTML='<div class="archive-empty">No past puzzles yet — check back tomorrow!</div>';
+    return;
+  }
+  list.innerHTML='<div class="archive-loading">Loading records…</div>';
+  const records=await fetchRecords(dates);
+  const todayStr=getTodayStr();
+
+  let html='';
+  for(const d of dates){
+    const rec=records[d];
+    const isToday=d===todayStr;
+    const dateD=dateFromStr(d);
+    const dayName=DAYS[dateD.getDay()];
+    const dateShort=`${MONTHS[dateD.getMonth()]} ${dateD.getDate()}, ${dateD.getFullYear()}`;
+
+    html+=`<div class="archive-row${isToday?' today-row':''}" data-date="${d}">
+      <div>
+        <div class="archive-date">${dateShort}</div>
+        <div class="archive-date-sub">${dayName}</div>
+      </div>
+      <div style="text-align:right">
+        ${rec
+          ? `<div class="archive-record">🏆 ${fmtTime(rec.time_seconds)}</div><div class="archive-record-lbl">${rec.flag||''} ${rec.name}</div>`
+          : `<div class="no-record">—</div>`
+        }
+      </div>
+      <div class="archive-arrow">›</div>
+    </div>`;
+  }
+  list.innerHTML=html;
+
+  // Attach click handlers
+  list.querySelectorAll('.archive-row').forEach(row=>{
+    row.addEventListener('click',()=>openPuzzle(row.dataset.date));
+  });
+}
+
+// ── Puzzle state ──
+let arcGame=null;
+let arcTimer=null;
+let arcCurrentDate=null;
+
+function openPuzzle(dateStr){
+  arcCurrentDate=dateStr;
+  document.getElementById('archive-view').style.display='none';
+  document.getElementById('puzzle-view').style.display='block';
+
+  const dateD=dateFromStr(dateStr);
+  document.getElementById('puzzle-badge').textContent=`${MONTHS[dateD.getMonth()]} ${dateD.getDate()}, ${dateD.getFullYear()}`;
+  document.getElementById('puzzle-title').textContent=`${DAYS[dateD.getDay()]}'s Puzzle`;
+  document.getElementById('arc-lb-date').textContent=`${MONTHS[dateD.getMonth()]} ${dateD.getDate()}, ${dateD.getFullYear()}`;
+
+  loadPuzzle(dateStr);
+  loadLeaderboard(dateStr);
+
+  gtag('event','archive_opened',{date:dateStr});
+}
+
+function loadPuzzle(dateStr){
+  if(arcGame){
+    clearInterval(arcTimer);
+    arcGame=null;
+  }
+  const seed=seedFromStr(dateStr);
+  const puzzle=generatePuzzle(10,10,seed);
+  const canvas=document.getElementById('arc-canvas');
+  const wrap=document.getElementById('arc-canvas-wrap');
+  arcGame=new ShikakuGame(puzzle,canvas,wrap);
+
+  // Start timer
+  document.getElementById('arc-timer').textContent='0:00';
+  clearInterval(arcTimer);
+  arcTimer=setInterval(()=>{
+    if(!arcGame||arcGame.solved)return;
+    document.getElementById('arc-timer').textContent=fmtTime(Math.floor((Date.now()-arcGame.startTime)/1000));
+  },500);
+
+  arcGame.onSolve=(elapsed)=>{
+    clearInterval(arcTimer);
+    document.getElementById('arc-timer').textContent=fmtTime(elapsed);
+    document.getElementById('win-time').textContent=fmtTime(elapsed);
+    document.getElementById('win-subtitle').textContent=`${formatDateShort(dateStr)} · Archive replay`;
+    setTimeout(()=>document.getElementById('win-overlay').classList.add('show'),600);
+    gtag('event','archive_solved',{date:dateStr,time_seconds:elapsed});
+  };
+
+  setTimeout(()=>arcGame&&arcGame.resize(),50);
+}
+
+async function loadLeaderboard(dateStr){
+  const listEl=document.getElementById('arc-lb-list');
+  listEl.innerHTML='<li class="lb-empty">Loading…</li>';
+  const entries=await fetchDayLeaderboard(dateStr);
+  if(!entries.length){
+    listEl.innerHTML='<li class="lb-empty">No entries for this day</li>';
+    return;
+  }
+  listEl.innerHTML=entries.map((e,i)=>`
+    <li class="lb-row">
+      <span class="lb-rank">${i+1}</span>
+      <span class="lb-name">${e.flag||''} ${e.name}</span>
+      <span class="lb-time">${fmtTime(e.time_seconds)}</span>
+    </li>
+  `).join('');
+}
+
+function goBackToArchive(){
+  clearInterval(arcTimer);
+  arcGame=null;
+  document.getElementById('puzzle-view').style.display='none';
+  document.getElementById('archive-view').style.display='block';
+  document.getElementById('win-overlay').classList.remove('show');
+}
+
+// ── Button handlers ──
+document.getElementById('back-btn').addEventListener('click',goBackToArchive);
+document.getElementById('arc-reset-btn').addEventListener('click',()=>{
+  if(arcGame&&!arcGame.solved){
+    arcGame.playerRects=[];arcGame.solved=false;arcGame.mode='idle';arcGame.preview=null;
+    arcGame.startTime=Date.now();arcGame.render();
+    clearInterval(arcTimer);
+    document.getElementById('arc-timer').textContent='0:00';
+    arcTimer=setInterval(()=>{
+      if(!arcGame||arcGame.solved)return;
+      document.getElementById('arc-timer').textContent=fmtTime(Math.floor((Date.now()-arcGame.startTime)/1000));
+    },500);
+  }
+});
+document.getElementById('arc-new-btn').addEventListener('click',()=>{
+  if(arcCurrentDate)loadPuzzle(arcCurrentDate);
+  document.getElementById('win-overlay').classList.remove('show');
+});
+document.getElementById('win-again-btn').addEventListener('click',()=>{
+  document.getElementById('win-overlay').classList.remove('show');
+  if(arcCurrentDate)loadPuzzle(arcCurrentDate);
+});
+document.getElementById('win-back-btn').addEventListener('click',goBackToArchive);
+document.getElementById('win-overlay').addEventListener('click',e=>{
+  if(e.target===e.currentTarget)e.currentTarget.classList.remove('show');
+});
+
+// ── Resize ──
+let _lastW=window.innerWidth,_lastH=window.innerHeight;
+window.addEventListener('resize',()=>{
+  if(window.innerWidth===_lastW&&window.innerHeight===_lastH)return;
+  _lastW=window.innerWidth;_lastH=window.innerHeight;
+  if(arcGame)arcGame.resize();
+});
+
+// ── Init ──
+renderArchive();
+</script>
+
+<a href="https://buymeacoffee.com/juulian" target="_blank" rel="noopener" style="position:fixed;bottom:24px;right:24px;z-index:999;display:flex;align-items:center;gap:8px;background:#8a6f3a;color:#faf9f5;font-family:'DM Mono',monospace;font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;padding:12px 20px;border-radius:50px;text-decoration:none;box-shadow:0 4px 20px rgba(0,0,0,.18);transition:background .18s ease" onmouseover="this.style.background='#c4a565'" onmouseout="this.style.background='#8a6f3a'">☕ Support</a>
+</body>
+</html>
