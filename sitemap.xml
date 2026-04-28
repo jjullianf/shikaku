@@ -32,9 +32,15 @@
   </url>
 
   <url>
-    <loc>https://shikaku.ch/shop.html</loc>
+    <loc>https://shikaku.ch/archive.html</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <url>
+    <loc>https://shikaku.ch/shikaku-vs-patches.html</loc>
     <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
+    <priority>0.7</priority>
   </url>
 
 </urlset>
