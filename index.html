@@ -17,12 +17,12 @@
 <meta name="description" content="Play the free Shikaku game online — a daily rectangle puzzle with a global leaderboard. New challenge every day, unlimited practice, no account needed.">
 <meta name="keywords" content="shikaku game, shikaku daily, shikaku puzzle, shikaku online, free shikaku game, rectangle game, rectangle puzzle game, shikaku daily puzzle, daily logic puzzle, divide into rectangles, japanese puzzle game, shikaku leaderboard">
 <meta property="og:title" content="Shikaku Puzzle — Free Daily Game with Leaderboard">
-<meta property="og:description" content="Play the free Shikaku game online — a daily rectangle puzzle with a global leaderboard. New challenge every day, no account needed.">
+<meta property="og:description" content="A new Shikaku logic puzzle every day. Free to play, no account needed. Can you beat today's challenge?">
 <meta property="og:url" content="https://shikaku.ch/">
 <meta property="og:type" content="website">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="Shikaku Game — Free Daily Puzzle">
-<meta name="twitter:description" content="Play the free Shikaku rectangle game online. Daily puzzle with global leaderboard at shikaku.ch">
+<meta name="twitter:title" content="Shikaku Daily Puzzle">
+<meta name="twitter:description" content="A new free Shikaku logic challenge every day at shikaku.ch">
 <link rel="canonical" href="https://shikaku.ch/">
 <script type="application/ld+json">
 {"@context":"https://schema.org","@type":"WebApplication","name":"Shikaku Game","url":"https://shikaku.ch/","description":"Free online Shikaku game — a daily rectangle puzzle with a global leaderboard. Divide the grid into rectangles using number clues.","applicationCategory":"GameApplication","genre":"Puzzle","keywords":"shikaku game, rectangle game, shikaku puzzle, rectangle puzzle game, daily shikaku","operatingSystem":"Any","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}}
@@ -922,7 +922,7 @@ function getTodayStr(){const d=new Date();return `${d.getFullYear()}-${String(d.
 function hasSubmittedToday(){const v=JSON.parse(localStorage.getItem(LB_KEY)||'{}');return v.date===getTodayStr();}
 function markSubmittedToday(){localStorage.setItem(LB_KEY,JSON.stringify({date:getTodayStr()}));}
 async function fetchLeaderboard(){
-  try{const res=await fetch(`${SUPA_URL}/rest/v1/daily_leaderboard?date=eq.${getTodayStr()}&order=time_seconds.asc&limit=25`,{headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY}});return res.ok?await res.json():[];}catch(e){return [];}
+  try{const res=await fetch(`${SUPA_URL}/rest/v1/daily_leaderboard?date=eq.${getTodayStr()}&order=time_seconds.asc&limit=50`,{headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY}});return res.ok?await res.json():[];}catch(e){return [];}
 }
 async function submitScore(name,country,flag,seconds){
   try{const res=await fetch(`${SUPA_URL}/rest/v1/daily_leaderboard`,{method:'POST',headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,'Content-Type':'application/json','Prefer':'return=minimal'},body:JSON.stringify({date:getTodayStr(),name,country,flag,time_seconds:seconds})});return res.ok||res.status===201;}catch(e){return false;}
