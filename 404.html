@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-45EFHESZW4"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag("js", new Date());
+  gtag("config", "G-45EFHESZW4");
+</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Page Not Found — Shikaku</title>
+<meta name="robots" content="noindex">
+<link rel="shortcut icon" href="favicon.ico">
+<link rel="icon" type="image/png" href="favicon.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Noto+Serif+JP:wght@300;400&display=swap">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--ink:#1a1916;--ink2:#4a4840;--ink3:#8a8880;--paper:#faf9f5;--paper2:#f0ede5;--paper3:#e8e4d8;--gold:#8a6f3a;--gold2:#c4a565;--border:rgba(26,25,22,0.12);--r:4px;--t:0.18s ease}
+@media(prefers-color-scheme:dark){:root{--ink:#e8e6de;--ink2:#a8a69e;--ink3:#686660;--paper:#111110;--paper2:#1a1918;--paper3:#222120;--gold:#c4a565;--gold2:#8a6f3a;--border:rgba(232,230,222,0.1)}}
+html,body{height:100%}
+body{font-family:'DM Mono',monospace;background:var(--paper);color:var(--ink);-webkit-font-smoothing:antialiased;display:flex;flex-direction:column}
+nav{position:fixed;top:0;left:0;right:0;z-index:100;background:var(--paper);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 16px 0 24px;height:56px;gap:12px}
+.nav-logo{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--ink);flex-shrink:0}
+.nav-logo-icon{width:34px;height:34px;flex-shrink:0}
+.nav-logo-text{font-family:'Noto Serif JP',serif;font-weight:300;font-size:1.1rem;letter-spacing:.12em}
+.nav-logo-text span{color:var(--gold)}
+.nav-links{display:flex;gap:24px;list-style:none;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;flex:1;justify-content:flex-end}
+.nav-links::-webkit-scrollbar{display:none}
+.nav-links li{flex-shrink:0}
+.nav-links a{font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;color:var(--ink2);text-decoration:none;transition:color var(--t);white-space:nowrap}
+.nav-links a:hover{color:var(--gold)}
+@media(max-width:480px){.nav-logo-text{display:none}}
+
+main{flex:1;display:flex;align-items:center;justify-content:center;padding:56px 24px 80px}
+.container{text-align:center;max-width:480px}
+
+/* Animated grid */
+.grid-wrap{margin:0 auto 40px;width:120px;height:120px;position:relative}
+.grid-svg{width:120px;height:120px;opacity:.85}
+.grid-cell{fill:none;stroke:var(--border);stroke-width:1}
+.rect{fill:rgba(138,111,58,0.12);stroke:var(--gold);stroke-width:1.5;rx:2;ry:2;opacity:0;animation:popIn 0.4s ease forwards}
+.rect:nth-child(1){animation-delay:0.1s}
+.rect:nth-child(2){animation-delay:0.3s}
+.rect:nth-child(3){animation-delay:0.5s}
+.rect:nth-child(4){animation-delay:0.7s}
+.rect:nth-child(5){animation-delay:0.9s}
+.clue{fill:var(--ink2);font-family:'DM Mono',monospace;font-size:8px;font-weight:500;opacity:0;animation:popIn 0.3s ease forwards}
+.clue:nth-child(6){animation-delay:0.15s}
+.clue:nth-child(7){animation-delay:0.35s}
+.clue:nth-child(8){animation-delay:0.55s}
+.clue:nth-child(9){animation-delay:0.75s}
+.clue:nth-child(10){animation-delay:0.95s}
+@keyframes popIn{from{opacity:0;transform:scale(0.8)}to{opacity:1;transform:scale(1)}}
+
+.error-code{font-family:'Noto Serif JP',serif;font-weight:300;font-size:5rem;letter-spacing:.05em;color:var(--paper3);line-height:1;margin-bottom:4px;animation:fadeUp .5s ease both}
+.error-title{font-family:'Noto Serif JP',serif;font-weight:300;font-size:1.4rem;letter-spacing:.1em;color:var(--ink);margin-bottom:12px;animation:fadeUp .5s ease .1s both}
+.error-sub{font-size:.76rem;color:var(--ink3);letter-spacing:.05em;line-height:1.8;margin-bottom:36px;animation:fadeUp .5s ease .2s both}
+
+.btn-row{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;animation:fadeUp .5s ease .3s both}
+.btn{display:inline-flex;align-items:center;gap:8px;font-family:'DM Mono',monospace;font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;padding:10px 22px;border:1px solid var(--border);background:var(--paper2);color:var(--ink2);cursor:pointer;border-radius:var(--r);transition:all var(--t);text-decoration:none}
+.btn:hover{background:var(--paper3);color:var(--ink);border-color:var(--gold2)}
+.btn-gold{background:var(--gold)!important;color:var(--paper)!important;border-color:var(--gold)!important}
+.btn-gold:hover{background:var(--gold2)!important;border-color:var(--gold2)!important}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+@media(max-width:480px){.error-code{font-size:3.5rem}.error-title{font-size:1.1rem}}
+</style>
+</head>
+<body>
+<nav>
+  <a href="index.html" class="nav-logo">
+    <svg class="nav-logo-icon" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg">
+      <rect width="60" height="60" rx="6" fill="currentColor"/>
+      <rect x="3" y="3" width="54" height="17" rx="3" fill="white"/>
+      <rect x="3" y="22" width="17" height="35" rx="3" fill="white"/>
+      <rect x="22" y="22" width="35" height="17" rx="3" fill="white"/>
+      <rect x="22" y="41" width="17" height="16" rx="3" fill="white"/>
+      <rect x="41" y="41" width="16" height="16" rx="3" fill="white"/>
+    </svg>
+    <span class="nav-logo-text"><span>shikaku</span></span>
+  </a>
+  <ul class="nav-links">
+    <li><a href="index.html">Daily</a></li>
+    <li><a href="play.html">Play</a></li>
+    <li><a href="archive.html">Archive</a></li>
+    <li><a href="about.html">About</a></li>
+    <li><a href="guide.html">Guide</a></li>
+  </ul>
+</nav>
+
+<main>
+  <div class="container">
+
+    <!-- Animated puzzle grid -->
+    <div class="grid-wrap">
+      <svg class="grid-svg" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+        <!-- Grid lines -->
+        <line x1="24" y1="0" x2="24" y2="120" stroke="var(--border)" stroke-width="0.5"/>
+        <line x1="48" y1="0" x2="48" y2="120" stroke="var(--border)" stroke-width="0.5"/>
+        <line x1="72" y1="0" x2="72" y2="120" stroke="var(--border)" stroke-width="0.5"/>
+        <line x1="96" y1="0" x2="96" y2="120" stroke="var(--border)" stroke-width="0.5"/>
+        <line x1="0" y1="24" x2="120" y2="24" stroke="var(--border)" stroke-width="0.5"/>
+        <line x1="0" y1="48" x2="120" y2="48" stroke="var(--border)" stroke-width="0.5"/>
+        <line x1="0" y1="72" x2="120" y2="72" stroke="var(--border)" stroke-width="0.5"/>
+        <line x1="0" y1="96" x2="120" y2="96" stroke="var(--border)" stroke-width="0.5"/>
+        <rect x="0" y="0" width="120" height="120" fill="none" stroke="var(--ink3)" stroke-width="1"/>
+        <!-- Animated rectangles -->
+        <rect class="rect" x="1" y="1" width="46" height="22" rx="2"/>
+        <rect class="rect" x="49" y="1" width="70" height="46" rx="2"/>
+        <rect class="rect" x="1" y="25" width="22" height="70" rx="2"/>
+        <rect class="rect" x="25" y="25" width="22" height="46" rx="2"/>
+        <rect class="rect" x="1" y="97" width="118" height="22" rx="2"/>
+        <!-- Clue numbers -->
+        <text class="clue" x="12" y="16" text-anchor="middle">2</text>
+        <text class="clue" x="84" y="28" text-anchor="middle">6</text>
+        <text class="clue" x="12" y="64" text-anchor="middle">3</text>
+        <text class="clue" x="36" y="52" text-anchor="middle">2</text>
+        <text class="clue" x="60" y="112" text-anchor="middle">5</text>
+      </svg>
+    </div>
+
+    <div class="error-code">404</div>
+    <h1 class="error-title">Puzzle not found</h1>
+    <p class="error-sub">This page doesn't exist — but today's puzzle does.<br>Head back and keep solving.</p>
+
+    <div class="btn-row">
+      <a href="index.html" class="btn btn-gold">Today's puzzle →</a>
+      <a href="play.html" class="btn">Play unlimited</a>
+    </div>
+
+  </div>
+</main>
+
+<a href="https://buymeacoffee.com/juulian" target="_blank" rel="noopener" style="position:fixed;bottom:24px;right:24px;z-index:999;display:flex;align-items:center;gap:8px;background:#8a6f3a;color:#faf9f5;font-family:'DM Mono',monospace;font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;padding:12px 20px;border-radius:50px;text-decoration:none;box-shadow:0 4px 20px rgba(0,0,0,.18);transition:background .18s ease" onmouseover="this.style.background='#c4a565'" onmouseout="this.style.background='#8a6f3a'">☕ Support</a>
+</body>
+</html>
