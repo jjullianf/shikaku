@@ -966,7 +966,7 @@ function attachLBHandler(sfx){
     if(ok){
       markSubmittedToday();
       fetchLeaderboard().then(entries=>{renderLB(entries);});
-      document.getElementById('win-leaderboard-section').innerHTML='<div style="border-top:1px solid var(--border);padding-top:14px;margin-top:4px"><div class="lb-submitted" style="color:var(--gold);font-size:.72rem;letter-spacing:.06em">✓ Score added to leaderboard!</div></div>';
+      document.getElementById('win-leaderboard-section').innerHTML='<div style="border-top:1px solid var(--border);padding-top:14px;margin-top:4px"><div class="lb-submitted" style="color:var(--gold);font-size:.72rem;letter-spacing:.06em">✓ Score added to leaderboard!</div><div style=\"margin-top:10px;font-size:.68rem;color:var(--ink3);letter-spacing:.05em\">Enjoying shikaku.ch? <a id=\"bmac-link\" href=\"https://buymeacoffee.com/juulian\" target=\"_blank\" rel=\"noopener\" style=\"color:var(--gold);text-decoration:none;border-bottom:1px solid var(--gold2)\">☕ Support the creator</a></div></div>';
     }else{btn.disabled=false;btn.textContent='Submit score';alert('Could not submit — please try again.');}
   });
 }
@@ -1005,7 +1005,7 @@ function showWinLBSection(){
     const ok=await submitScore(name,country,flag,solvedElapsed);
     if(ok){
       markSubmittedToday();
-      sec.innerHTML='<div style="border-top:1px solid var(--border);padding-top:14px;margin-top:4px"><div class="lb-submitted" style="color:var(--gold);font-size:.72rem;letter-spacing:.06em">✓ Score added to leaderboard!</div></div>';
+      sec.innerHTML='<div style="border-top:1px solid var(--border);padding-top:14px;margin-top:4px"><div class="lb-submitted" style="color:var(--gold);font-size:.72rem;letter-spacing:.06em">✓ Score added to leaderboard!</div><div style=\"margin-top:10px;font-size:.68rem;color:var(--ink3);letter-spacing:.05em\">Enjoying shikaku.ch? <a id=\"bmac-link\" href=\"https://buymeacoffee.com/juulian\" target=\"_blank\" rel=\"noopener\" style=\"color:var(--gold);text-decoration:none;border-bottom:1px solid var(--gold2)\">☕ Support the creator</a></div></div>';
       fetchLeaderboard().then(renderLB);
     }else{btn.disabled=false;btn.textContent='Add to leaderboard';alert('Could not submit — please try again.');}
   });
@@ -1013,5 +1013,12 @@ function showWinLBSection(){
 </script>
 
 <a href="https://buymeacoffee.com/juulian" target="_blank" rel="noopener" style="position:fixed;bottom:24px;right:24px;z-index:999;display:flex;align-items:center;gap:8px;background:#8a6f3a;color:#faf9f5;font-family:'DM Mono',monospace;font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;padding:12px 20px;border-radius:50px;text-decoration:none;box-shadow:0 4px 20px rgba(0,0,0,.18);transition:background .18s ease" onmouseover="this.style.background='#c4a565'" onmouseout="this.style.background='#8a6f3a'">☕ Support</a>
+
+<script>
+document.addEventListener('click', function(e) {
+  var el = e.target.closest('#bmac-link');
+  if (el) gtag('event', 'bmac_click', {event_category: 'monetisation', event_label: 'win_overlay'});
+});
+</script>
 </body>
 </html>
