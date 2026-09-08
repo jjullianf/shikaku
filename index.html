@@ -961,6 +961,7 @@ function attachLBHandler(sfx){
     if(!name){nameEl.focus();nameEl.style.borderColor='#c43030';return;}
     const country=document.getElementById('lbc-'+sfx).value;
     const flag=COUNTRIES.find(c=>c.name===country)?.flag||'🌍';
+    if(!solvedElapsed||solvedElapsed<3){alert('Invalid time — score not submitted.');return;}
     btn.disabled=true;btn.textContent='Submitting...';
     const ok=await submitScore(name,country,flag,solvedElapsed);
     if(ok){
@@ -1001,6 +1002,7 @@ function showWinLBSection(){
     const country=document.getElementById('win-lb-country').value;
     const flag=COUNTRIES.find(c=>c.name===country)?.flag||'🌍';
     const btn=document.getElementById('win-lb-confirm');
+    if(!solvedElapsed||solvedElapsed<3){alert('Invalid time — score not submitted.');return;}
     btn.disabled=true;btn.textContent='Submitting...';
     const ok=await submitScore(name,country,flag,solvedElapsed);
     if(ok){
