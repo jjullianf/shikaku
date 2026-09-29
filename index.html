@@ -867,6 +867,18 @@ function startGame() {
 
 document.getElementById('start-btn').addEventListener('click', startGame);
 
+// One attempt per day: if already solved today, replace start overlay with a message
+(function(){
+  var todayStr=(function(){var n=new Date();return n.getFullYear()+'-'+(n.getMonth()+1)+'-'+n.getDate();})();
+  var s=JSON.parse(localStorage.getItem('shikaku_daily_stats')||'{}');
+  if(s.lastSolvedDate===todayStr){
+    var overlay=document.getElementById('start-overlay');
+    if(overlay){
+      overlay.innerHTML='<div style="text-align:center;padding:20px 16px"><div style="font-family:\'Noto Serif JP\',serif;font-weight:300;font-size:1.1rem;letter-spacing:.08em;color:var(--ink);margin-bottom:8px">Already solved today</div><div style="font-size:.7rem;color:var(--ink3);letter-spacing:.06em;line-height:1.7;margin-bottom:16px">Come back tomorrow for a new puzzle.</div><a href="play.html" style="display:inline-block;font-family:\'DM Mono\',monospace;font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;padding:10px 22px;border-radius:4px;background:var(--gold);color:var(--paper);text-decoration:none">Play unlimited →</a></div>';
+    }
+  }
+})();
+
 // Block canvas interaction until started
 const origCanvas = document.getElementById('game-canvas');
 ['mousedown','touchstart'].forEach(evt => {
