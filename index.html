@@ -141,6 +141,38 @@ main{padding-top:56px;min-height:100vh}
 .lb-confirm-btn{font-family:'DM Mono',monospace;font-size:.65rem;letter-spacing:.1em;text-transform:uppercase;padding:8px;border:1px solid var(--gold);background:var(--gold);color:var(--paper);cursor:pointer;border-radius:var(--r);transition:all var(--t)}
 .lb-confirm-btn:hover{background:var(--gold2);border-color:var(--gold2)}
 .lb-submitted{font-size:.68rem;color:var(--gold);text-align:center;padding:8px 0;letter-spacing:.04em}
+
+/* ── Supporter colours ───────────────────────────────────────────────────── */
+.lb-row.lb-sup{cursor:pointer;box-shadow:inset 0 0 0 1px rgba(0,0,0,.06)}
+.lb-row.lb-sup .lb-rank,.lb-row.lb-sup .lb-name,.lb-row.lb-sup .lb-time{color:#2a2620}
+.sup-tip{position:fixed;z-index:300;max-width:230px;background:var(--paper);color:var(--ink2);border:1px solid var(--border);box-shadow:var(--shadow);border-radius:6px;padding:10px 12px;font-size:.66rem;line-height:1.6;letter-spacing:.03em;opacity:0;pointer-events:none;transition:opacity .15s ease}
+.sup-tip.show{opacity:1;pointer-events:auto}
+.sup-tip a{color:var(--gold);text-decoration:none;border-bottom:1px solid var(--gold2)}
+.sup-pick{display:flex;gap:9px;justify-content:center;align-items:center;padding:4px 0 0}
+.sup-dot{width:26px;height:26px;border-radius:50%;border:2px solid transparent;cursor:pointer;padding:0;outline-offset:2px;transition:transform var(--t),border-color var(--t)}
+.sup-dot:hover{transform:scale(1.1)}
+.sup-dot.sel{border-color:var(--ink);transform:scale(1.12)}
+.sup-dot.none{background:var(--paper);border:1px dashed var(--ink3)}
+.sup-dot.none.sel{border:2px solid var(--ink)}
+.sup-pick-note{font-size:.58rem;color:var(--ink3);letter-spacing:.05em;text-align:center}
+.nf-card{border-top:1px solid var(--border);margin-top:16px;padding-top:16px;text-align:left}
+.nf-tag{display:inline-block;font-size:.58rem;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);border:1px solid var(--gold2);border-radius:50px;padding:3px 10px;margin-bottom:10px}
+.nf-preview{background:var(--paper2);border:1px solid var(--border);border-radius:6px;padding:8px 8px 6px;display:flex;flex-direction:column;gap:3px}
+.nf-row{display:grid;grid-template-columns:16px 1fr auto;gap:6px;font-size:.64rem;padding:4px 6px;border-radius:3px;color:var(--ink2)}
+.nf-row span:first-child,.nf-row span:last-child{color:var(--gold)}
+.nf-row.nf-hl{color:#2a2620;transform:scale(1.03);box-shadow:0 2px 10px rgba(0,0,0,.1)}
+.nf-row.nf-hl span{color:#2a2620}
+.nf-code-link{align-self:flex-end;background:none;border:none;font-family:'DM Mono',monospace;font-size:.6rem;letter-spacing:.06em;color:var(--ink3);text-decoration:underline;cursor:pointer;padding:4px 2px 0}
+.nf-code-link:hover{color:var(--gold)}
+.nf-title{font-family:'Noto Serif JP',serif;font-weight:300;font-size:.95rem;letter-spacing:.06em;color:var(--ink);margin:12px 0 4px}
+.nf-text{font-size:.66rem;color:var(--ink3);letter-spacing:.04em;line-height:1.6;margin-bottom:12px}
+.nf-cta{display:block;text-align:center;font-family:'DM Mono',monospace;font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;padding:10px;border-radius:var(--r);background:var(--gold);color:var(--paper);text-decoration:none;transition:background var(--t)}
+.nf-cta:hover{background:var(--gold2)}
+.nf-code{margin-top:12px}
+.nf-code-row{display:flex;gap:6px}
+.nf-code-row .lb-input{flex:1;min-width:0;text-transform:uppercase}
+.nf-code-msg{font-size:.6rem;color:var(--ink3);letter-spacing:.03em;line-height:1.6;margin-top:6px}
+.nf-code-msg.err{color:#c43030}
 </style>
 </head>
 <body>
@@ -940,8 +972,76 @@ function markSubmittedToday(){localStorage.setItem(LB_KEY,JSON.stringify({date:g
 async function fetchLeaderboard(){
   try{const res=await fetch(`${SUPA_URL}/rest/v1/daily_leaderboard?date=eq.${getTodayStr()}&order=time_seconds.asc&limit=50`,{headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY}});return res.ok?await res.json():[];}catch(e){return [];}
 }
-async function submitScore(name,country,flag,seconds){
+// ── SUPPORTERS ───────────────────────────────────────────────────────────────
+const BMC_URL='https://buymeacoffee.com/juulian';
+const SUP_KEY='shikaku_supporter_code',SUP_LAST='shikaku_supporter_color';
+const SUP_COLORS={red:'#f4b4b0',orange:'#f7cd9c',green:'#b6dfb9',blue:'#b4cff1',violet:'#d3c2f0'};
+function esc(v){return String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function lsGet(k){try{return localStorage.getItem(k)||'';}catch(e){return '';}}
+function lsSet(k,v){try{v?localStorage.setItem(k,v):localStorage.removeItem(k);}catch(e){}}
+function isSupporter(){return !!lsGet(SUP_KEY);}
+async function rpc(fn,body){
+  const res=await fetch(`${SUPA_URL}/rest/v1/rpc/${fn}`,{method:'POST',headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,'Content-Type':'application/json'},body:JSON.stringify(body)});
+  if(!res.ok)throw new Error('rpc '+res.status);return res.json();
+}
+async function checkSupporterCode(code){try{return (await rpc('check_supporter_code',{p_code:code}))===true;}catch(e){return null;}}
+async function submitScore(name,country,flag,seconds,color){
+  if(color&&isSupporter()){
+    try{
+      const ok=await rpc('submit_supporter_score',{p_code:lsGet(SUP_KEY),p_date:getTodayStr(),p_name:name,p_country:country,p_flag:flag,p_time:seconds,p_color:color});
+      if(ok===true){lsSet(SUP_LAST,color);return true;}
+      lsSet(SUP_KEY,'');alert('Your supporter code is no longer valid — submitting without colour.');
+    }catch(e){return false;}
+  }
   try{const res=await fetch(`${SUPA_URL}/rest/v1/daily_leaderboard`,{method:'POST',headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,'Content-Type':'application/json','Prefer':'return=minimal'},body:JSON.stringify({date:getTodayStr(),name,country,flag,time_seconds:seconds})});return res.ok||res.status===201;}catch(e){return false;}
+}
+function colorPickerHTML(sfx){
+  if(!isSupporter())return '';
+  const last=lsGet(SUP_LAST);const def=SUP_COLORS[last]?last:'violet';
+  return `<div class="sup-pick" id="sp-${sfx}" role="radiogroup" aria-label="Name colour"><button type="button" class="sup-dot none" data-c="" title="No colour" aria-label="No colour"></button>${Object.entries(SUP_COLORS).map(([k,v])=>`<button type="button" class="sup-dot${k===def?' sel':''}" data-c="${k}" style="background:${v}" title="${k}" aria-label="${k}"></button>`).join('')}</div><div class="sup-pick-note">☕ Your supporter colour · fixed once added</div>`;
+}
+function attachPicker(sfx){
+  const box=document.getElementById('sp-'+sfx);if(!box)return;
+  box.addEventListener('click',e=>{const d=e.target.closest('.sup-dot');if(!d)return;box.querySelectorAll('.sup-dot').forEach(x=>x.classList.remove('sel'));d.classList.add('sel');});
+}
+function pickedColor(sfx){const d=document.querySelector(`#sp-${sfx} .sup-dot.sel`);return d&&d.dataset.c?d.dataset.c:null;}
+function featureCardHTML(){
+  if(isSupporter())return '';
+  return `<div class="nf-card">
+    <span class="nf-tag">✨ New feature</span>
+    <div class="nf-preview" aria-hidden="false">
+      <div class="nf-row"><span>1</span><span>🇨🇭 Anna</span><span>1:42</span></div>
+      <div class="nf-row nf-hl" style="background:${SUP_COLORS.violet}"><span>2</span><span>☕ 🇩🇪 You?</span><span>1:58</span></div>
+      <div class="nf-row"><span>3</span><span>🇺🇸 Sam</span><span>2:10</span></div>
+      <button type="button" class="nf-code-link" id="nf-code-link">Enter code</button>
+    </div>
+    <div class="nf-title">Stand out on the leaderboard</div>
+    <div class="nf-text">Supporters get a coloured name tag — pick red, orange, green, blue or violet every day you play.</div>
+    <a class="nf-cta bmac-track" data-label="supporter_feature" href="${BMC_URL}" target="_blank" rel="noopener">☕ Get your colour</a>
+    <div class="nf-code" id="nf-code" hidden>
+      <div class="nf-code-row"><input class="lb-input" id="nf-code-input" placeholder="Supporter code" autocomplete="off" spellcheck="false"><button type="button" class="lb-confirm-btn" id="nf-code-btn">Unlock</button></div>
+      <div class="nf-code-msg" id="nf-code-msg">Your code comes with the Buy Me a Coffee thank-you message. It can take up to 24 hours, but it's sent as fast as possible.</div>
+    </div>
+  </div>`;
+}
+function attachFeatureCard(onUnlock){
+  const link=document.getElementById('nf-code-link');if(!link)return;
+  const wrap=document.getElementById('nf-code'),inp=document.getElementById('nf-code-input'),btn=document.getElementById('nf-code-btn'),msg=document.getElementById('nf-code-msg');
+  link.addEventListener('click',()=>{wrap.hidden=!wrap.hidden;if(!wrap.hidden)inp.focus();});
+  const go=async()=>{
+    const code=(inp.value||'').trim().toUpperCase();if(!code){inp.focus();return;}
+    btn.disabled=true;btn.textContent='…';
+    const ok=await checkSupporterCode(code);
+    btn.disabled=false;btn.textContent='Unlock';
+    if(ok===true){lsSet(SUP_KEY,code);if(typeof gtag==='function')gtag('event','supporter_unlock',{event_category:'monetisation'});onUnlock&&onUnlock();fetchLeaderboard().then(renderLB);}
+    else{msg.classList.add('err');msg.textContent=ok===null?'Could not check the code — please try again.':'That code doesn’t work. Check for typos — codes can take up to 24 hours to arrive.';}
+  };
+  btn.addEventListener('click',go);inp.addEventListener('keydown',e=>{if(e.key==='Enter')go();});
+}
+function afterSubmitHTML(){
+  const head='<div style="border-top:1px solid var(--border);padding-top:14px;margin-top:4px"><div class="lb-submitted" style="color:var(--gold);font-size:.72rem;letter-spacing:.06em">✓ Score added to leaderboard!</div>';
+  if(isSupporter())return head+'<div style="margin-top:8px;font-size:.66rem;color:var(--ink3);letter-spacing:.05em">☕ Thanks for supporting shikaku.ch</div></div>';
+  return head+'</div>'+featureCardHTML();
 }
 const COUNTRIES=[
   {name:'Afghanistan',flag:'🇦🇫'},{name:'Albania',flag:'🇦🇱'},{name:'Algeria',flag:'🇩🇿'},{name:'Argentina',flag:'🇦🇷'},
@@ -963,9 +1063,10 @@ function lbFormHTML(sfx){
   if(hasSubmittedToday())return '<div class="lb-submitted">✓ Score submitted</div>';
   if(!game||!game.solved)return '<button class="lb-submit-btn" disabled>Solve to submit</button>';
   const opts=COUNTRIES.map(c=>`<option value="${c.name}">${c.flag} ${c.name}</option>`).join('');
-  return `<div class="lb-form"><input class="lb-input" id="lbn-${sfx}" placeholder="Your name" maxlength="20"><select class="lb-input" id="lbc-${sfx}">${opts}</select><button class="lb-confirm-btn" id="lbk-${sfx}">Submit score</button></div>`;
+  return `<div class="lb-form"><input class="lb-input" id="lbn-${sfx}" placeholder="Your name" maxlength="20"><select class="lb-input" id="lbc-${sfx}">${opts}</select>${colorPickerHTML(sfx)}<button class="lb-confirm-btn" id="lbk-${sfx}">Submit score</button></div>`;
 }
 function attachLBHandler(sfx){
+  attachPicker(sfx);
   const btn=document.getElementById('lbk-'+sfx);if(!btn)return;
   btn.addEventListener('click',async()=>{
     const nameEl=document.getElementById('lbn-'+sfx);
@@ -975,18 +1076,18 @@ function attachLBHandler(sfx){
     const flag=COUNTRIES.find(c=>c.name===country)?.flag||'🌍';
     if(!solvedElapsed||solvedElapsed<3){alert('Invalid time — score not submitted.');return;}
     btn.disabled=true;btn.textContent='Submitting...';
-    const ok=await submitScore(name,country,flag,solvedElapsed);
+    const ok=await submitScore(name,country,flag,solvedElapsed,pickedColor(sfx));
     if(ok){
       markSubmittedToday();
       fetchLeaderboard().then(entries=>{renderLB(entries);});
-      document.getElementById('win-leaderboard-section').innerHTML='<div style="border-top:1px solid var(--border);padding-top:14px;margin-top:4px"><div class="lb-submitted" style="color:var(--gold);font-size:.72rem;letter-spacing:.06em">✓ Score added to leaderboard!</div><div style=\"margin-top:10px;font-size:.68rem;color:var(--ink3);letter-spacing:.05em\">Enjoying shikaku.ch? <a id=\"bmac-link\" href=\"https://buymeacoffee.com/juulian\" target=\"_blank\" rel=\"noopener\" style=\"color:var(--gold);text-decoration:none;border-bottom:1px solid var(--gold2)\">☕ Support the creator</a></div></div>';
+      document.getElementById('win-leaderboard-section').innerHTML=afterSubmitHTML();attachFeatureCard(null);
     }else{btn.disabled=false;btn.textContent='Submit score';alert('Could not submit — please try again.');}
   });
 }
 function renderLB(entries){
   const MONTHS2=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   const d=new Date();
-  function inner(sfx){return `<div class="lb-title">Today's Leaderboard</div><div class="lb-date">${MONTHS2[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}</div><ul class="lb-list">${entries.length===0?'<li class="lb-empty">No entries yet — be first!</li>':entries.map((e,i)=>`<li class="lb-row"><span class="lb-rank">${i+1}</span><span class="lb-name">${e.flag} ${e.name}</span><span class="lb-time">${fmtTime(e.time_seconds)}</span></li>`).join('')}</ul>${lbFormHTML(sfx)}`;}
+  function inner(sfx){return `<div class="lb-title">Today's Leaderboard</div><div class="lb-date">${MONTHS2[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}</div><ul class="lb-list">${entries.length===0?'<li class="lb-empty">No entries yet — be first!</li>':entries.map((e,i)=>{const c=SUP_COLORS[e.color];return c?`<li class="lb-row lb-sup" style="background:${c}" tabindex="0"><span class="lb-rank">${i+1}</span><span class="lb-name">☕ ${esc(e.flag)} ${esc(e.name)}</span><span class="lb-time">${fmtTime(e.time_seconds)}</span></li>`:`<li class="lb-row"><span class="lb-rank">${i+1}</span><span class="lb-name">${esc(e.flag)} ${esc(e.name)}</span><span class="lb-time">${fmtTime(e.time_seconds)}</span></li>`;}).join('')}</ul>${lbFormHTML(sfx)}`;}
   document.getElementById('lb-box-desktop').innerHTML=inner('d');
   document.getElementById('lb-box-mobile').innerHTML=inner('m');
   attachLBHandler('d');attachLBHandler('m');
@@ -1004,9 +1105,16 @@ fetchLeaderboard().then(entries=>{renderLB(entries);setTimeout(()=>game&&game.re
 function showWinLBSection(){
   const sec=document.getElementById('win-leaderboard-section');
   if(!sec)return;
-  if(hasSubmittedToday()){sec.innerHTML='<div style="border-top:1px solid var(--border);padding-top:14px;margin-top:4px"><div class="lb-submitted" style="color:var(--gold);font-size:.72rem;letter-spacing:.06em">✓ Score already submitted today</div></div>';return;}
+  if(hasSubmittedToday()){sec.innerHTML='<div style="border-top:1px solid var(--border);padding-top:14px;margin-top:4px"><div class="lb-submitted" style="color:var(--gold);font-size:.72rem;letter-spacing:.06em">✓ Score already submitted today</div></div>'+featureCardHTML();attachFeatureCard(showWinLBSection);return;}
+  const prevName=(document.getElementById('win-lb-name')||{}).value||'';
+  const prevCountry=(document.getElementById('win-lb-country')||{}).value||'';
   const opts=COUNTRIES.map(c=>`<option value="${c.name}">${c.flag} ${c.name}</option>`).join('');
-  sec.innerHTML=`<div style="border-top:1px solid var(--border);padding-top:16px;margin-top:4px"><p style="font-size:.68rem;color:var(--ink3);letter-spacing:.06em;margin-bottom:10px">Add your score to the leaderboard</p><div style="display:flex;flex-direction:column;gap:8px"><input class="lb-input" id="win-lb-name" placeholder="Your name" maxlength="20" style="width:100%"><select class="lb-input" id="win-lb-country" style="width:100%">${opts}</select><button class="lb-confirm-btn" id="win-lb-confirm">Add to leaderboard</button></div></div>`;
+  const sup=isSupporter();
+  sec.innerHTML=`<div style="border-top:1px solid var(--border);padding-top:16px;margin-top:4px"><p style="font-size:.68rem;color:var(--ink3);letter-spacing:.06em;margin-bottom:10px">${sup?'Add your score — and pick your colour':'Add your score to the leaderboard'}</p><div style="display:flex;flex-direction:column;gap:8px"><input class="lb-input" id="win-lb-name" placeholder="Your name" maxlength="20" style="width:100%"><select class="lb-input" id="win-lb-country" style="width:100%">${opts}</select>${colorPickerHTML('w')}<button class="lb-confirm-btn" id="win-lb-confirm">Add to leaderboard</button></div></div>${featureCardHTML()}`;
+  document.getElementById('win-lb-name').value=prevName;
+  if(prevCountry)document.getElementById('win-lb-country').value=prevCountry;
+  attachPicker('w');
+  attachFeatureCard(showWinLBSection);
   document.getElementById('win-lb-confirm').addEventListener('click',async()=>{
     const nameEl=document.getElementById('win-lb-name');
     const name=(nameEl.value||'').trim();
@@ -1016,22 +1124,42 @@ function showWinLBSection(){
     const btn=document.getElementById('win-lb-confirm');
     if(!solvedElapsed||solvedElapsed<3){alert('Invalid time — score not submitted.');return;}
     btn.disabled=true;btn.textContent='Submitting...';
-    const ok=await submitScore(name,country,flag,solvedElapsed);
+    const ok=await submitScore(name,country,flag,solvedElapsed,pickedColor('w'));
     if(ok){
       markSubmittedToday();
-      sec.innerHTML='<div style="border-top:1px solid var(--border);padding-top:14px;margin-top:4px"><div class="lb-submitted" style="color:var(--gold);font-size:.72rem;letter-spacing:.06em">✓ Score added to leaderboard!</div><div style=\"margin-top:10px;font-size:.68rem;color:var(--ink3);letter-spacing:.05em\">Enjoying shikaku.ch? <a id=\"bmac-link\" href=\"https://buymeacoffee.com/juulian\" target=\"_blank\" rel=\"noopener\" style=\"color:var(--gold);text-decoration:none;border-bottom:1px solid var(--gold2)\">☕ Support the creator</a></div></div>';
+      sec.innerHTML=afterSubmitHTML();attachFeatureCard(null);
       fetchLeaderboard().then(renderLB);
     }else{btn.disabled=false;btn.textContent='Add to leaderboard';alert('Could not submit — please try again.');}
   });
 }
+
+// ── Supporter tooltip (hover on desktop, tap on mobile) ──────────────────────
+(function(){
+  const tip=document.createElement('div');tip.className='sup-tip';tip.id='sup-tip';tip.setAttribute('role','tooltip');document.body.appendChild(tip);
+  let hideT=null,cur=null;
+  tip.innerHTML=`☕ <b>This player supports shikaku.ch</b><br>Want your own coloured name tag? Choose from 5 colours — <a class="bmac-track" data-label="lb_tooltip" href="${BMC_URL}" target="_blank" rel="noopener">support here</a>.`;
+  function show(row){
+    clearTimeout(hideT);cur=row;tip.classList.add('show');
+    const r=row.getBoundingClientRect(),w=tip.offsetWidth,h=tip.offsetHeight;
+    let x=r.left+r.width/2-w/2;x=Math.max(8,Math.min(x,window.innerWidth-w-8));
+    let y=r.top-h-8;if(y<64)y=r.bottom+8;
+    tip.style.left=x+'px';tip.style.top=y+'px';
+  }
+  function hide(delay){clearTimeout(hideT);hideT=setTimeout(()=>{tip.classList.remove('show');cur=null;},delay||0);}
+  document.addEventListener('mouseover',e=>{const row=e.target.closest('.lb-sup');if(row)show(row);else if(e.target.closest('#sup-tip'))clearTimeout(hideT);});
+  document.addEventListener('mouseout',e=>{if(e.target.closest('.lb-sup')||e.target.closest('#sup-tip'))hide(250);});
+  document.addEventListener('focusin',e=>{const row=e.target.closest('.lb-sup');if(row)show(row);});
+  document.addEventListener('click',e=>{const row=e.target.closest('.lb-sup');if(row){row===cur&&tip.classList.contains('show')?hide():show(row);}else if(!e.target.closest('#sup-tip'))hide();});
+  window.addEventListener('scroll',()=>hide(),{passive:true});
+})();
 </script>
 
 <a href="https://buymeacoffee.com/juulian" target="_blank" rel="noopener" style="position:fixed;bottom:24px;right:24px;z-index:999;display:flex;align-items:center;gap:8px;background:#8a6f3a;color:#faf9f5;font-family:'DM Mono',monospace;font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;padding:12px 20px;border-radius:50px;text-decoration:none;box-shadow:0 4px 20px rgba(0,0,0,.18);transition:background .18s ease" onmouseover="this.style.background='#c4a565'" onmouseout="this.style.background='#8a6f3a'">☕ Support</a>
 
 <script>
 document.addEventListener('click', function(e) {
-  var el = e.target.closest('#bmac-link');
-  if (el) gtag('event', 'bmac_click', {event_category: 'monetisation', event_label: 'win_overlay'});
+  var el = e.target.closest('#bmac-link, .bmac-track');
+  if (el && typeof gtag === 'function') gtag('event', 'bmac_click', {event_category: 'monetisation', event_label: el.dataset.label || 'win_overlay'});
 });
 </script>
 </body>
