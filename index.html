@@ -155,24 +155,26 @@ main{padding-top:56px;min-height:100vh}
 .sup-dot.none{background:var(--paper);border:1px dashed var(--ink3)}
 .sup-dot.none.sel{border:2px solid var(--ink)}
 .sup-pick-note{font-size:.58rem;color:var(--ink3);letter-spacing:.05em;text-align:center}
-.nf-card{border-top:1px solid var(--border);margin-top:16px;padding-top:16px;text-align:left}
-.nf-tag{display:inline-block;font-size:.58rem;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);border:1px solid var(--gold2);border-radius:50px;padding:3px 10px;margin-bottom:10px}
-.nf-preview{background:var(--paper2);border:1px solid var(--border);border-radius:6px;padding:8px 8px 6px;display:flex;flex-direction:column;gap:3px}
-.nf-row{display:grid;grid-template-columns:16px 1fr auto;gap:6px;font-size:.64rem;padding:4px 6px;border-radius:3px;color:var(--ink2)}
+.nf-card{border-bottom:1px solid var(--border);margin:0 0 12px;padding-bottom:14px;text-align:left}
+.nf-tag{display:inline-block;font-size:.56rem;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);border:1px solid var(--gold2);border-radius:50px;padding:2px 9px;margin-bottom:8px}
+.nf-preview{background:var(--paper2);border:1px solid var(--border);border-radius:6px;padding:6px 6px 6px;display:flex;flex-direction:column;gap:2px}
+.nf-row{display:grid;grid-template-columns:16px 1fr auto;gap:6px;font-size:.62rem;padding:3px 6px;border-radius:3px;color:var(--ink2)}
 .nf-row span:first-child,.nf-row span:last-child{color:var(--gold)}
 .nf-row.nf-hl{color:#2a2620;transform:scale(1.03);box-shadow:0 2px 10px rgba(0,0,0,.1)}
 .nf-row.nf-hl span{color:#2a2620}
-.nf-code-link{align-self:flex-end;background:none;border:none;font-family:'DM Mono',monospace;font-size:.6rem;letter-spacing:.06em;color:var(--ink3);text-decoration:underline;cursor:pointer;padding:4px 2px 0}
+.nf-code-link{align-self:flex-end;background:var(--paper);border:1px solid var(--gold2);border-radius:50px;font-family:'DM Mono',monospace;font-size:.64rem;letter-spacing:.06em;color:var(--gold);cursor:pointer;padding:3px 10px;margin-top:4px}
 .nf-code-link:hover{color:var(--gold)}
-.nf-title{font-family:'Noto Serif JP',serif;font-weight:300;font-size:.95rem;letter-spacing:.06em;color:var(--ink);margin:12px 0 4px}
-.nf-text{font-size:.66rem;color:var(--ink3);letter-spacing:.04em;line-height:1.6;margin-bottom:12px}
-.nf-cta{display:block;text-align:center;font-family:'DM Mono',monospace;font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;padding:10px;border-radius:var(--r);background:var(--gold);color:var(--paper);text-decoration:none;transition:background var(--t)}
+.nf-title{font-family:'Noto Serif JP',serif;font-weight:300;font-size:.95rem;letter-spacing:.06em;color:var(--ink);margin:10px 0 2px}
+.nf-text{font-size:.64rem;color:var(--ink3);letter-spacing:.03em;line-height:1.5;margin-bottom:10px}
+.nf-cta{display:block;text-align:center;font-family:'DM Mono',monospace;font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;padding:8px;border-radius:var(--r);background:var(--gold);color:var(--paper);text-decoration:none;transition:background var(--t)}
 .nf-cta:hover{background:var(--gold2)}
 .nf-code{margin-top:12px}
 .nf-code-row{display:flex;gap:6px}
 .nf-code-row .lb-input{flex:1;min-width:0;text-transform:uppercase}
 .nf-code-msg{font-size:.6rem;color:var(--ink3);letter-spacing:.03em;line-height:1.6;margin-top:6px}
 .nf-code-msg.err{color:#c43030}
+.win-overlay .win-card{padding:28px 32px}.win-overlay .kigo{font-size:1.8rem;margin-bottom:8px}.win-overlay .win-card p{margin-bottom:10px}.win-overlay .time-display{font-size:1.7rem;margin-bottom:14px}
+@media(max-width:560px){.win-overlay .win-card{padding:22px 18px;width:92%;max-height:92vh;overflow-y:auto}}
 </style>
 </head>
 <body>
@@ -1013,10 +1015,10 @@ function featureCardHTML(){
       <div class="nf-row"><span>1</span><span>🇨🇭 Anna</span><span>1:42</span></div>
       <div class="nf-row nf-hl" style="background:${SUP_COLORS.violet}"><span>2</span><span>☕ 🇩🇪 You?</span><span>1:58</span></div>
       <div class="nf-row"><span>3</span><span>🇺🇸 Sam</span><span>2:10</span></div>
-      <button type="button" class="nf-code-link" id="nf-code-link">Enter code</button>
+      <button type="button" class="nf-code-link" id="nf-code-link">🔑 Enter code</button>
     </div>
     <div class="nf-title">Stand out on the leaderboard</div>
-    <div class="nf-text">Supporters get a coloured name tag — pick red, orange, green, blue or violet every day you play.</div>
+    <div class="nf-text">Supporters get a coloured name tag of their choice — every day they play.</div>
     <a class="nf-cta bmac-track" data-label="supporter_feature" href="${BMC_URL}" target="_blank" rel="noopener">☕ Get your colour</a>
     <div class="nf-code" id="nf-code" hidden>
       <div class="nf-code-row"><input class="lb-input" id="nf-code-input" placeholder="Supporter code" autocomplete="off" spellcheck="false"><button type="button" class="lb-confirm-btn" id="nf-code-btn">Unlock</button></div>
@@ -1041,7 +1043,7 @@ function attachFeatureCard(onUnlock){
 function afterSubmitHTML(){
   const head='<div style="border-top:1px solid var(--border);padding-top:14px;margin-top:4px"><div class="lb-submitted" style="color:var(--gold);font-size:.72rem;letter-spacing:.06em">✓ Score added to leaderboard!</div>';
   if(isSupporter())return head+'<div style="margin-top:8px;font-size:.66rem;color:var(--ink3);letter-spacing:.05em">☕ Thanks for supporting shikaku.ch</div></div>';
-  return head+'</div>'+featureCardHTML();
+  return featureCardHTML()+head+'</div>';
 }
 const COUNTRIES=[
   {name:'Afghanistan',flag:'🇦🇫'},{name:'Albania',flag:'🇦🇱'},{name:'Algeria',flag:'🇩🇿'},{name:'Argentina',flag:'🇦🇷'},
@@ -1105,12 +1107,12 @@ fetchLeaderboard().then(entries=>{renderLB(entries);setTimeout(()=>game&&game.re
 function showWinLBSection(){
   const sec=document.getElementById('win-leaderboard-section');
   if(!sec)return;
-  if(hasSubmittedToday()){sec.innerHTML='<div style="border-top:1px solid var(--border);padding-top:14px;margin-top:4px"><div class="lb-submitted" style="color:var(--gold);font-size:.72rem;letter-spacing:.06em">✓ Score already submitted today</div></div>'+featureCardHTML();attachFeatureCard(showWinLBSection);return;}
+  if(hasSubmittedToday()){sec.innerHTML=featureCardHTML()+'<div class="lb-submitted" style="color:var(--gold);font-size:.72rem;letter-spacing:.06em">✓ Score already submitted today</div>';attachFeatureCard(showWinLBSection);return;}
   const prevName=(document.getElementById('win-lb-name')||{}).value||'';
   const prevCountry=(document.getElementById('win-lb-country')||{}).value||'';
   const opts=COUNTRIES.map(c=>`<option value="${c.name}">${c.flag} ${c.name}</option>`).join('');
   const sup=isSupporter();
-  sec.innerHTML=`<div style="border-top:1px solid var(--border);padding-top:16px;margin-top:4px"><p style="font-size:.68rem;color:var(--ink3);letter-spacing:.06em;margin-bottom:10px">${sup?'Add your score — and pick your colour':'Add your score to the leaderboard'}</p><div style="display:flex;flex-direction:column;gap:8px"><input class="lb-input" id="win-lb-name" placeholder="Your name" maxlength="20" style="width:100%"><select class="lb-input" id="win-lb-country" style="width:100%">${opts}</select>${colorPickerHTML('w')}<button class="lb-confirm-btn" id="win-lb-confirm">Add to leaderboard</button></div></div>${featureCardHTML()}`;
+  sec.innerHTML=`${featureCardHTML()}<div style="${isSupporter()?'border-top:1px solid var(--border);padding-top:14px;':''}"><p style="font-size:.68rem;color:var(--ink3);letter-spacing:.06em;margin-bottom:8px">${sup?'Add your score — and pick your colour':'Add your score to the leaderboard'}</p><div style="display:flex;flex-direction:column;gap:8px"><input class="lb-input" id="win-lb-name" placeholder="Your name" maxlength="20" style="width:100%"><select class="lb-input" id="win-lb-country" style="width:100%">${opts}</select>${colorPickerHTML('w')}<button class="lb-confirm-btn" id="win-lb-confirm">Add to leaderboard</button></div></div>`;
   document.getElementById('win-lb-name').value=prevName;
   if(prevCountry)document.getElementById('win-lb-country').value=prevCountry;
   attachPicker('w');
@@ -1137,7 +1139,7 @@ function showWinLBSection(){
 (function(){
   const tip=document.createElement('div');tip.className='sup-tip';tip.id='sup-tip';tip.setAttribute('role','tooltip');document.body.appendChild(tip);
   let hideT=null,cur=null;
-  tip.innerHTML=`☕ <b>This player supports shikaku.ch</b><br>Want your own coloured name tag? Choose from 5 colours — <a class="bmac-track" data-label="lb_tooltip" href="${BMC_URL}" target="_blank" rel="noopener">support here</a>.`;
+  tip.innerHTML=`☕ <b>This player supports shikaku.ch</b><br>Want your own coloured name tag? <a class="bmac-track" data-label="lb_tooltip" href="${BMC_URL}" target="_blank" rel="noopener">support here</a>.`;
   function show(row){
     clearTimeout(hideT);cur=row;tip.classList.add('show');
     const r=row.getBoundingClientRect(),w=tip.offsetWidth,h=tip.offsetHeight;
