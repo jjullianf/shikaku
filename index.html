@@ -1007,7 +1007,22 @@ function attachPicker(sfx){
   box.addEventListener('click',e=>{const d=e.target.closest('.sup-dot');if(!d)return;box.querySelectorAll('.sup-dot').forEach(x=>x.classList.remove('sel'));d.classList.add('sel');});
 }
 function pickedColor(sfx){const d=document.querySelector(`#sp-${sfx} .sup-dot.sel`);return d&&d.dataset.c?d.dataset.c:null;}
-function featureCardHTML(){return '';}
+function featureCardHTML(){
+  if(isSupporter())return '<div style="margin-top:10px;font-size:.68rem;color:var(--gold);letter-spacing:.05em">☕ Thanks for supporting shikaku.ch!</div>';
+  return `<div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border)">
+    <div style="font-size:.68rem;color:var(--ink3);letter-spacing:.05em;line-height:1.7">
+      Supporters get a coloured name tag on the leaderboard. <a class="bmac-track" data-label="win_overlay_nudge" href="${BMC_URL}" target="_blank" rel="noopener" style="color:var(--gold);text-decoration:none;border-bottom:1px solid var(--gold2)">☕ Support shikaku.ch</a>
+    </div>
+    <div style="margin-top:8px;display:flex;gap:6px" id="nf-code" hidden>
+      <input class="lb-input" id="nf-code-input" placeholder="Enter code" autocomplete="off" spellcheck="false" style="flex:1;min-width:0;text-transform:uppercase">
+      <button type="button" class="lb-confirm-btn" id="nf-code-btn" style="padding:8px 14px">Unlock</button>
+    </div>
+    <div style="margin-top:6px">
+      <button type="button" class="nf-code-link" id="nf-code-link" style="font-size:.62rem;margin-top:4px">🔑 Already have a code?</button>
+    </div>
+    <div class="nf-code-msg" id="nf-code-msg" style="display:none"></div>
+  </div>`;
+}
 function attachFeatureCard(onUnlock){
   const link=document.getElementById('nf-code-link');if(!link)return;
   const wrap=document.getElementById('nf-code'),inp=document.getElementById('nf-code-input'),btn=document.getElementById('nf-code-btn'),msg=document.getElementById('nf-code-msg');
@@ -1025,7 +1040,7 @@ function attachFeatureCard(onUnlock){
 function afterSubmitHTML(){
   const head='<div style="border-top:1px solid var(--border);padding-top:14px;margin-top:4px"><div class="lb-submitted" style="color:var(--gold);font-size:.72rem;letter-spacing:.06em">✓ Score added to leaderboard!</div>';
   if(isSupporter())return head+'<div style="margin-top:8px;font-size:.66rem;color:var(--ink3);letter-spacing:.05em">☕ Thanks for supporting shikaku.ch</div></div>';
-  return featureCardHTML()+head+'</div>';
+  return head+featureCardHTML()+'</div>';
 }
 const COUNTRIES=[
   {name:'Afghanistan',flag:'🇦🇫'},{name:'Albania',flag:'🇦🇱'},{name:'Algeria',flag:'🇩🇿'},{name:'Angola',flag:'🇦🇴'},
