@@ -41,7 +41,7 @@
 :root{--ink:#1a1916;--ink2:#4a4840;--ink3:#8a8880;--paper:#faf9f5;--paper2:#f0ede5;--paper3:#e8e4d8;--gold:#8a6f3a;--gold2:#c4a565;--border:rgba(26,25,22,0.12);--shadow:0 2px 20px rgba(26,25,22,0.08);--r:4px;--t:0.18s ease}
 @media(prefers-color-scheme:dark){:root{--ink:#e8e6de;--ink2:#a8a69e;--ink3:#686660;--paper:#111110;--paper2:#1a1918;--paper3:#222120;--gold:#c4a565;--gold2:#8a6f3a;--border:rgba(232,230,222,0.1);--shadow:0 2px 20px rgba(0,0,0,0.3)}}
 html{font-size:16px}
-body{font-family:'DM Mono',monospace;background:var(--paper);color:var(--ink);min-height:100vh;-webkit-font-smoothing:antialiased;display:flex;flex-direction:column}
+body{font-family:'DM Mono',monospace;background:var(--paper);color:var(--ink);min-height:100vh;-webkit-font-smoothing:antialiased}
 nav{position:fixed;top:0;left:0;right:0;z-index:100;background:var(--paper);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 16px 0 24px;height:56px;gap:12px}
 .nav-logo{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--ink);flex-shrink:0}
 .nav-logo-icon{width:34px;height:34px;flex-shrink:0}
@@ -53,7 +53,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;background:var(--paper);bord
 .nav-links a{font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;color:var(--ink2);text-decoration:none;transition:color var(--t);white-space:nowrap}
 .nav-links a:hover,.nav-links a.active{color:var(--gold)}
 @media(max-width:480px){.nav-logo-text{display:none}}
-main{padding-top:56px;min-height:100vh}
+main{padding-top:56px;min-height:100vh;padding-bottom:48px}
 .game-with-ads{display:flex;align-items:flex-start;justify-content:center;gap:0;width:100%}
 .ad-sidebar{width:160px;flex-shrink:0;padding-top:8px;display:none}
 .ad-sidebar-left{margin-right:16px}
@@ -176,11 +176,11 @@ main{padding-top:56px;min-height:100vh}
 .win-overlay .win-card{padding:28px 32px}.win-overlay .kigo{font-size:1.8rem;margin-bottom:8px}.win-overlay .win-card p{margin-bottom:10px}.win-overlay .time-display{font-size:1.7rem;margin-bottom:14px}
 @media(max-width:560px){.win-overlay .win-card{padding:22px 18px;width:92%;max-height:92vh;overflow-y:auto}}
 
-footer#site-footer{border-top:1px solid var(--border);padding:18px 24px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;font-size:.65rem;letter-spacing:.08em;color:var(--ink3);font-family:'DM Mono',monospace}
+footer#site-footer{position:fixed;bottom:0;left:0;right:0;z-index:99;background:var(--paper);border-top:1px solid var(--border);padding:12px 24px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;font-size:.65rem;letter-spacing:.08em;color:var(--ink3);font-family:'DM Mono',monospace}
 .footer-links{display:flex;gap:20px;flex-wrap:wrap}
 .footer-links a{color:var(--ink3);text-decoration:none;transition:color var(--t)}
 .footer-links a:hover{color:var(--gold)}
-@media(max-width:480px){footer#site-footer{flex-direction:column;align-items:flex-start;gap:10px}}
+@media(max-width:480px){footer#site-footer{flex-direction:column;align-items:flex-start;gap:6px;padding:10px 16px}}
 </style>
 </head>
 <body>
@@ -210,7 +210,7 @@ footer#site-footer{border-top:1px solid var(--border);padding:18px 24px;display:
     <li><a href="guide.html">Guide</a></li>
   </ul>
 </nav>
-<main style="flex:1">
+<main>
 <div class="page-with-leaderboard">
   <div class="main-col">
   <div class="page-header">
@@ -286,6 +286,16 @@ footer#site-footer{border-top:1px solid var(--border);padding:18px 24px;display:
 
 </div><!-- end page-with-leaderboard -->
 </main>
+<!-- footer below -->
+<footer id="site-footer">
+  <span>© 2026 shikaku.ch</span>
+  <nav class="footer-links">
+    <a href="about.html">About</a>
+    <a href="about.html#privacy">Privacy</a>
+    <a href="guide.html">Guide</a>
+    <a href="shikaku-vs-patches.html">Shikaku vs Patches</a>
+  </nav>
+</footer>
 
 <div class="win-overlay" id="win-overlay">
   <div class="win-card" style="max-width:420px">
@@ -1188,14 +1198,5 @@ document.addEventListener('click', function(e) {
 });
 </script>
 
-<footer id="site-footer">
-  <span>© 2026 shikaku.ch</span>
-  <nav class="footer-links">
-    <a href="about.html">About</a>
-    <a href="about.html#privacy">Privacy</a>
-    <a href="guide.html">Guide</a>
-    <a href="shikaku-vs-patches.html">Shikaku vs Patches</a>
-  </nav>
-</footer>
 </body>
 </html>
