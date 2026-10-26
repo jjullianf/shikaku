@@ -41,7 +41,7 @@
 :root{--ink:#1a1916;--ink2:#4a4840;--ink3:#8a8880;--paper:#faf9f5;--paper2:#f0ede5;--paper3:#e8e4d8;--gold:#8a6f3a;--gold2:#c4a565;--border:rgba(26,25,22,0.12);--shadow:0 2px 20px rgba(26,25,22,0.08);--r:4px;--t:0.18s ease}
 @media(prefers-color-scheme:dark){:root{--ink:#e8e6de;--ink2:#a8a69e;--ink3:#686660;--paper:#111110;--paper2:#1a1918;--paper3:#222120;--gold:#c4a565;--gold2:#8a6f3a;--border:rgba(232,230,222,0.1);--shadow:0 2px 20px rgba(0,0,0,0.3)}}
 html{font-size:16px}
-body{font-family:'DM Mono',monospace;background:var(--paper);color:var(--ink);min-height:100vh;-webkit-font-smoothing:antialiased}
+body{font-family:'DM Mono',monospace;background:var(--paper);color:var(--ink);min-height:100vh;-webkit-font-smoothing:antialiased;display:flex;flex-direction:column}
 nav{position:fixed;top:0;left:0;right:0;z-index:100;background:var(--paper);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 16px 0 24px;height:56px;gap:12px}
 .nav-logo{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--ink);flex-shrink:0}
 .nav-logo-icon{width:34px;height:34px;flex-shrink:0}
@@ -210,7 +210,7 @@ footer#site-footer{border-top:1px solid var(--border);padding:18px 24px;display:
     <li><a href="guide.html">Guide</a></li>
   </ul>
 </nav>
-<main>
+<main style="flex:1">
 <div class="page-with-leaderboard">
   <div class="main-col">
   <div class="page-header">
