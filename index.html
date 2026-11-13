@@ -889,12 +889,15 @@ function renderStats(){document.getElementById('streak-val').textContent=stats.s
 renderStats();
 
 function getDailySeed(){const d=new Date();return d.getFullYear()*10000+(d.getMonth()+1)*100+d.getDate();}
-const puzzle=generatePuzzle(10,10,getDailySeed());
+// The grid blurred behind the Start button is a DECOY (different seed), so today's
+// real puzzle can't be read before pressing Start. The real one is built in startGame().
+function getPreviewSeed(){return (getDailySeed()*7919+104729)|0;}
+const previewPuzzle=generatePuzzle(10,10,getPreviewSeed());
 const canvas=document.getElementById('game-canvas');
 const wrap=document.getElementById('canvas-wrap');
 let timerInterval=null;
 let gameStarted=false;
-const game=new ShikakuGame(puzzle,canvas,wrap);
+const game=new ShikakuGame(previewPuzzle,canvas,wrap);
 
 // Disable interaction until Start is pressed
 game.solved = false;
@@ -907,6 +910,10 @@ function startGame() {
   if (gameStarted) return;
   gameStarted = true;
   game._started = true;
+  // Replace the decoy preview with today's real puzzle (before the timer starts)
+  game.puzzle = generatePuzzle(10,10,getDailySeed());
+  game.playerRects = [];
+  game.render();
   game.startTime = Date.now();
   document.getElementById('start-overlay').style.display = 'none';
   timerInterval = setInterval(()=>{
